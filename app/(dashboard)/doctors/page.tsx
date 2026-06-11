@@ -1,46 +1,142 @@
 "use client";
 
+import { useState, useEffect, useCallback } from "react";
 import PageHeader from "@/components/dashboard/PageHeader";
+import DoctorTable from "@/components/dashboard/doctors/DoctorTable";
+import CreateDoctorModal from "@/components/dashboard/doctors/CreateDoctorModal";
+import ScheduleModal from "@/components/dashboard/doctors/ScheduleModal";
+import SlotViewer from "@/components/dashboard/doctors/SlotViewer";
 import Button from "@/components/ui/Button";
-import { Card } from "@/components/ui/Card";
+import { useAuth } from "@/hooks/useAuth";
+import { parseApiError } from "@/lib/auth";
+import api from "@/lib/api";
+import type { Doctor, DoctorListParams } from "@/types/doctor";
+import type { PaginatedResponse } from "@/types/common";
 
-// TODO (8e-2): Fill this page with:
-// - Doctor list with search + active/inactive filter
-// - Create doctor form (User + Doctor in one transaction)
-// - Schedule management per doctor (day-of-week + start/end time)
-// - Slot viewer: GET /api/v1/doctors/{id}/slots?date=YYYY-MM-DD
-// API calls:
-//   GET  /api/v1/doctors
-//   POST /api/v1/doctors
-//   GET  /api/v1/doctors/{id}/slots
+const PAGE_SIZE = 15;
 
 export default function DoctorsPage() {
+  const { isAdmin } = useAuth();
+
+  // ── list state ───────────────────────────────────────────────
+  const [doctors, setDoctors] = useState<Doctor[]>([]);
+  const [total, setTotal] = useState(0);
+  const [page, setPage] = useState(1);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  // ── filter state ─────────────────────────────────────────────
+  const [search, setSearch] = useState("");
+  const [activeFilter, setActiveFilter] = useState<"all" | "active" | "inactive">("all");
+
+  // ── modal state ──────────────────────────────────────────────
+  const [showCreate, setShowCreate] = useState(false);
+  const [scheduleDoctor, setScheduleDoctor] = useState<Doctor | null>(null);
+  const [slotDoctor, setSlotDoctor] = useState<Doctor | null>(null);
+
+  // ── fetch ────────────────────────────────────────────────────
+  const fetchDoctors = useCallback(async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const params: DoctorListParams = { page, page_size: PAGE_SIZE };
+      if (search.trim()) params.search = search.trim();
+      if (activeFilter === "active") params.is_active = true;
+      if (activeFilter === "inactive") params.is_active = false;
+
+      const res = await api.get<PaginatedResponse<Doctor>>("/doctors", { params });
+      setDoctors(res.data.items);
+      setTotal(res.data.total);
+    } catch (err) {
+      setError(parseApiError(err));
+    } finally {
+      setLoading(false);
+    }
+  }, [page, search, activeFilter]);
+
+  useEffect(() => {
+    fetchDoctors();
+  }, [fetchDoctors]);
+
+  // reset to page 1 when filters change
+  useEffect(() => {
+    setPage(1);
+  }, [search, activeFilter]);
+
+  // ── handlers ─────────────────────────────────────────────────
+  const handleCreated = () => {
+    setShowCreate(false);
+    fetchDoctors();
+  };
+
+  const totalPages = Math.ceil(total / PAGE_SIZE);
+
   return (
-    <div>
+    <div className="flex flex-col gap-6">
       <PageHeader
         title="Doctors"
-        subtitle="Manage doctors, schedules, and leave"
+        subtitle={
+          total > 0
+            ? `${total} doctor${total === 1 ? "" : "s"} registered`
+            : "Manage your medical staff"
+        }
         actions={
-          <Button variant="primary" size="sm">
-            Add doctor
-          </Button>
+          isAdmin ? (
+            <Button variant="primary" onClick={() => setShowCreate(true)}>
+              + Add Doctor
+            </Button>
+          ) : undefined
         }
       />
 
-      <Card padding="lg" className="flex flex-col items-center justify-center py-20 gap-3 text-center">
-        <div className="w-12 h-12 rounded-full bg-[var(--accent-light)] flex items-center justify-center text-[var(--accent)]">
-          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-            <path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/>
-            <circle cx="12" cy="7" r="4"/>
-          </svg>
+      {error && (
+        <div
+          className="rounded-lg px-4 py-3 text-sm"
+          style={{
+            background: "var(--error-bg)",
+            color: "var(--error)",
+            border: "1px solid var(--error)",
+          }}
+        >
+          {error}
         </div>
-        <div>
-          <p className="text-sm font-semibold text-[var(--text-primary)]">Doctors — coming next</p>
-          <p className="text-xs text-[var(--text-muted)] mt-1 max-w-xs">
-            Doctor list, schedule builder, slot viewer, and leave management will be built here.
-          </p>
-        </div>
-      </Card>
+      )}
+
+    <DoctorTable
+      doctors={doctors}
+      total={total}
+      loading={loading}
+      totalPages={totalPages}
+      currentPage={page}
+      search={search}
+      activeFilter={activeFilter}
+      onSearchChange={(v) => setSearch(v)}
+      onActiveFilterChange={(v) => setActiveFilter(v)}
+      onPageChange={(p) => setPage(p)}
+      onViewSchedule={(doc: Doctor) => setScheduleDoctor(doc)}
+      onViewSlots={(doc: Doctor) => setSlotDoctor(doc)}
+    />
+      {showCreate && (
+        <CreateDoctorModal
+          onClose={() => setShowCreate(false)}
+          onCreated={handleCreated}
+        />
+      )}
+
+      {scheduleDoctor && (
+        <ScheduleModal
+          doctor={scheduleDoctor}
+          onClose={() => setScheduleDoctor(null)}
+          onSaved={() => setScheduleDoctor(null)}
+        />
+      )}
+
+      {slotDoctor && (
+        <SlotViewer
+          doctor={slotDoctor}
+          onClose={() => setSlotDoctor(null)}
+        />
+      )}
     </div>
   );
 }
