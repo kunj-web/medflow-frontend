@@ -1,0 +1,154 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ─── Google Fonts ─────────────────────────────────────────────────────────── */
+@import url('https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
+
+/* ─── Design Tokens ────────────────────────────────────────────────────────── */
+:root {
+  /* Greys */
+  --gray-950:  #0D0F12;
+  --gray-900:  #151820;
+  --gray-800:  #1E2227;
+  --gray-700:  #2C3140;
+  --gray-600:  #4A5260;
+  --gray-500:  #6B7588;
+  --gray-400:  #8E97A8;
+  --gray-300:  #C4C9D4;
+  --gray-200:  #DDE1E9;
+  --gray-100:  #F0F2F5;
+  --gray-50:   #F8F9FB;
+
+  /* Accent — controlled steel blue */
+  --accent:       #2A6EBB;
+  --accent-hover: #2260A8;
+  --accent-light: #EBF2FA;
+  --accent-muted: #A8C4E0;
+
+  /* Semantic */
+  --success:      #1A7F5A;
+  --success-bg:   #ECFAF4;
+  --warning:      #B45309;
+  --warning-bg:   #FEF3C7;
+  --error:        #B91C1C;
+  --error-bg:     #FEF2F2;
+  --info:         #1D4ED8;
+  --info-bg:      #EFF6FF;
+
+  /* Surface */
+  --bg-base:    #F8F9FB;
+  --bg-card:    #FFFFFF;
+  --bg-subtle:  #F0F2F5;
+  --border:     #DDE1E9;
+  --border-strong: #C4C9D4;
+
+  /* Typography */
+  --text-primary:   #0D0F12;
+  --text-secondary: #4A5260;
+  --text-muted:     #8E97A8;
+  --text-inverse:   #FFFFFF;
+
+  /* Brand color — overridden by HospitalContext */
+  --color-primary: #2A6EBB;
+
+  /* Radius */
+  --radius-sm:  4px;
+  --radius-md:  8px;
+  --radius-lg:  12px;
+  --radius-xl:  16px;
+
+  /* Shadow */
+  --shadow-sm:  0 1px 2px 0 rgb(0 0 0 / 0.05);
+  --shadow-md:  0 4px 6px -1px rgb(0 0 0 / 0.07), 0 2px 4px -1px rgb(0 0 0 / 0.04);
+  --shadow-lg:  0 10px 15px -3px rgb(0 0 0 / 0.08), 0 4px 6px -2px rgb(0 0 0 / 0.04);
+}
+
+/* ─── Base Reset ────────────────────────────────────────────────────────────── */
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html {
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+  scroll-behavior: smooth;
+}
+
+body {
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  background-color: var(--bg-base);
+  color: var(--text-primary);
+  line-height: 1.6;
+  font-size: 15px;
+}
+
+/* ─── Typography Scale ──────────────────────────────────────────────────────── */
+.font-display {
+  font-family: 'DM Serif Display', Georgia, serif;
+}
+
+.font-mono {
+  font-family: 'JetBrains Mono', 'Fira Code', monospace;
+}
+
+/* ─── Focus ─────────────────────────────────────────────────────────────────── */
+:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+/* ─── Scrollbar ─────────────────────────────────────────────────────────────── */
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: var(--gray-100); }
+::-webkit-scrollbar-thumb { background: var(--gray-300); border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: var(--gray-400); }
+
+/* ─── Utilities ─────────────────────────────────────────────────────────────── */
+@layer utilities {
+  .text-balance { text-wrap: balance; }
+
+  .card {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-sm);
+  }
+
+  .badge-success {
+    background: var(--success-bg);
+    color: var(--success);
+  }
+
+  .badge-warning {
+    background: var(--warning-bg);
+    color: var(--warning);
+  }
+
+  .badge-error {
+    background: var(--error-bg);
+    color: var(--error);
+  }
+
+  .badge-info {
+    background: var(--info-bg);
+    color: var(--info);
+  }
+
+  .badge-neutral {
+    background: var(--gray-100);
+    color: var(--gray-600);
+  }
+}
+
+/* ─── Reduced Motion ────────────────────────────────────────────────────────── */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
