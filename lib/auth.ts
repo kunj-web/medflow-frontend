@@ -1,5 +1,18 @@
 import api, { tokenStore, cookieStore, parseApiError } from "./api";
-import { LoginRequest, TokenResponse, UserProfile } from "@/types/auth";
+import {
+  LoginRequest,
+  TokenResponse,
+  UserProfile,
+  RegisterRequest,
+  RegisterResponse,
+} from "@/types/auth";
+
+// ─── Register ─────────────────────────────────────────────────────────────────
+
+export async function register(payload: RegisterRequest): Promise<RegisterResponse> {
+  const { data } = await api.post<RegisterResponse>("/api/v1/auth/register", payload);
+  return data;
+}
 
 // ─── Login ────────────────────────────────────────────────────────────────────
 
@@ -30,7 +43,7 @@ export async function login(credentials: LoginRequest): Promise<UserProfile> {
 export function logout(): void {
   tokenStore.clear();
   cookieStore.clear();
-  // tokenStore.clear() already clears all relevant localStorage keys
+  
 }
 
 // ─── Get Current User ─────────────────────────────────────────────────────────
