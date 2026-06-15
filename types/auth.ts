@@ -12,6 +12,14 @@ export interface RefreshRequest {
   refresh_token: string;
 }
 
+export interface RegisterRequest {
+  hospital_name: string;
+  first_name: string;
+  last_name: string;
+  email: string;
+  password: string;
+}
+
 // ─── Responses ────────────────────────────────────────────────────────────────
 
 export interface TokenResponse {
@@ -29,6 +37,11 @@ export interface UserProfile {
   last_name?: string;
 }
 
+export interface RegisterResponse {
+  hospital_id: string;
+  message: string;
+}
+
 // ─── Stored Auth State ────────────────────────────────────────────────────────
 
 export interface StoredAuth {
@@ -37,3 +50,4 @@ export interface StoredAuth {
   hospital_id: string;
   user: UserProfile;
 }
+
