@@ -43,7 +43,7 @@ export default function LandingNav() {
 
         {/* CTA */}
         <div className="hidden md:flex items-center gap-3">
-          <Link href="/login">
+          <Link href="/register">
             <Button variant="ghost" size="sm">Sign in</Button>
           </Link>
           <Link href="/login">
@@ -79,8 +79,11 @@ export default function LandingNav() {
           <a href="#how-it-works" className="text-sm text-[var(--text-secondary)] py-2" onClick={() => setMobileOpen(false)}>How it works</a>
           <a href="#contact" className="text-sm text-[var(--text-secondary)] py-2" onClick={() => setMobileOpen(false)}>Contact</a>
           <div className="pt-2 border-t border-[var(--border)] flex flex-col gap-2">
-            <Link href="/login" onClick={() => setMobileOpen(false)}>
+            <Link href="/register" onClick={() => setMobileOpen(false)}>
               <Button variant="outline" size="md" className="w-full">Sign in</Button>
+            </Link>
+            <Link href="/login" onClick={() => setMobileOpen(false)}>
+              <Button variant="primary" size="md" className="w-full">Login to portal</Button>
             </Link>
           </div>
         </nav>
