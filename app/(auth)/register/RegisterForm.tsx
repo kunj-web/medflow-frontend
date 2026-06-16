@@ -395,7 +395,7 @@ export default function RegisterForm() {
             className="font-medium hover:text-[var(--text-secondary)] transition-colors"
             style={{ color: "var(--accent)" }}
           >
-            Sign in
+            Log in
           </Link>
         </p>
       </div>
