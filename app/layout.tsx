@@ -1,6 +1,5 @@
 import type { Metadata } from "next";
 import "@/app/globals.css";
-import { HospitalProvider } from "@/context/HospitalContext";
 
 export const metadata: Metadata = {
   title: "MedFlow — Hospital Operations Platform",
@@ -15,9 +14,7 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en">
-      <body>
-        <HospitalProvider>{children}</HospitalProvider>
-      </body>
+      <body>{children}</body>
     </html>
   );
 }

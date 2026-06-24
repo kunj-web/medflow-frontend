@@ -66,9 +66,4 @@ export function getStoredUser(): UserProfile | null {
   }
 }
 
-export function getStoredHospitalId(): string | null {
-  if (typeof window === "undefined") return null;
-  return localStorage.getItem("hospital_id");
-}
-
 export { parseApiError };

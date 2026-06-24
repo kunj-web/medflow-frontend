@@ -1,15 +1,6 @@
 "use client";
 
-import React, {
-  createContext,
-  useContext,
-  useEffect,
-  useState,
-  useCallback,
-} from "react";
-import api from "@/lib/api";
-
-// ─── Types ────────────────────────────────────────────────────────────────────
+import React, { createContext, useContext } from "react";
 
 interface HospitalConfig {
   id: string;
@@ -29,72 +20,25 @@ interface HospitalContextValue {
   reload: () => void;
 }
 
-// ─── Context ──────────────────────────────────────────────────────────────────
-
 const HospitalContext = createContext<HospitalContextValue>({
   hospital: null,
-  loading: true,
+  loading: false,
   reload: () => {},
 });
 
-// ─── Provider ─────────────────────────────────────────────────────────────────
-
 export function HospitalProvider({ children }: { children: React.ReactNode }) {
-  const [hospital, setHospital] = useState<HospitalConfig | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [tick, setTick] = useState(0);
-
-  const reload = useCallback(() => setTick((t) => t + 1), []);
-
-  useEffect(() => {
-    const hospitalId =
-      typeof window !== "undefined"
-        ? localStorage.getItem("hospital_id")
-        : null;
-
-    // No hospital_id means we're on a public page (landing/login) — exit early
-    if (!hospitalId) {
-      setLoading(false);
-      return;
-    }
-
-    let cancelled = false;
-
-    api
-      .get<HospitalConfig>(`/api/v1/admin/hospital/${hospitalId}`)
-      .then(({ data }) => {
-        if (cancelled) return;
-        setHospital(data);
-
-        // Apply brand color as CSS variable
-        if (data.primary_color) {
-          document.documentElement.style.setProperty(
-            "--color-primary",
-            data.primary_color
-          );
-        }
-      })
-      .catch(() => {
-        // Silently fail — hospital config is decorative, not critical
-        if (!cancelled) setHospital(null);
-      })
-      .finally(() => {
-        if (!cancelled) setLoading(false);
-      });
-
-    return () => {
-      cancelled = true;
-    };
-  }, [tick]);
-
   return (
-    <HospitalContext.Provider value={{ hospital, loading, reload }}>
+    <HospitalContext.Provider
+      value={{
+        hospital: null,
+        loading: false,
+        reload: () => {},
+      }}
+    >
       {children}
     </HospitalContext.Provider>
   );
 }
-
-// ─── Hook ─────────────────────────────────────────────────────────────────────
 
 export function useHospital(): HospitalContextValue {
   return useContext(HospitalContext);

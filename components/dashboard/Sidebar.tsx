@@ -3,7 +3,6 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useAuth } from "@/hooks/useAuth";
-import { useHospital } from "@/context/HospitalContext";
 import { UserRole } from "@/types/common";
 import { cn } from "@/lib/utils";
 
@@ -78,7 +77,6 @@ const NAV: NavItem[] = [
 export default function Sidebar() {
   const pathname = usePathname();
   const { user } = useAuth();
-  const { hospital } = useHospital();
 
   const visibleNav = NAV.filter(
     (item) => !user?.role || item.roles.includes(user.role as UserRole)
@@ -94,7 +92,7 @@ export default function Sidebar() {
           </svg>
         </div>
         <span className="font-semibold text-sm text-[var(--text-primary)] tracking-tight truncate">
-          {hospital?.name ?? "MedFlow"}
+          MedFlow
         </span>
       </div>
 
