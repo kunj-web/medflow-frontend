@@ -1,41 +1,72 @@
 "use client";
 
-import { useState, FormEvent } from "react";
+import { useEffect, useState, FormEvent } from "react";
 import Link from "next/link";
+import api from "@/lib/api";
 import { register, parseApiError } from "@/lib/auth";
 import Button from "@/components/ui/Button";
 import Input from "@/components/ui/Input";
+import { Gender, UserRole } from "@/types/common";
+import { RegisterRequest, RegisterResponse, WorkType } from "@/types/auth";
 
-// ── Form state ────────────────────────────────────────────────────────────────
+interface HospitalOption {
+  id: string;
+  name: string;
+  city: string | null;
+  state: string | null;
+}
+
+interface HospitalListResponse {
+  data: HospitalOption[];
+}
 
 interface FormState {
-  hospital_name: string;
-  first_name: string;
-  last_name: string;
+  role: UserRole.PATIENT | UserRole.DOCTOR;
+  name: string;
   email: string;
+  phone: string;
   password: string;
   confirm_password: string;
+  specialization: string;
+  qualification: string;
+  registration_number: string;
+  experience_years: string;
+  gender: Gender | "";
+  work_type: WorkType;
+  affiliation_mode: "existing" | "manual";
+  hospital_id: string;
+  pending_hospital_name: string;
+  pending_hospital_city: string;
+  pending_hospital_state: string;
+  clinic_name: string;
+  clinic_city: string;
+  clinic_address: string;
 }
 
-interface FieldErrors {
-  hospital_name?: string;
-  first_name?: string;
-  last_name?: string;
-  email?: string;
-  password?: string;
-  confirm_password?: string;
-}
+type FieldErrors = Partial<Record<keyof FormState, string>>;
 
 const EMPTY: FormState = {
-  hospital_name: "",
-  first_name: "",
-  last_name: "",
+  role: UserRole.PATIENT,
+  name: "",
   email: "",
+  phone: "",
   password: "",
   confirm_password: "",
+  specialization: "",
+  qualification: "",
+  registration_number: "",
+  experience_years: "",
+  gender: "",
+  work_type: "hospital",
+  affiliation_mode: "existing",
+  hospital_id: "",
+  pending_hospital_name: "",
+  pending_hospital_city: "",
+  pending_hospital_state: "",
+  clinic_name: "",
+  clinic_city: "",
+  clinic_address: "",
 };
-
-// ── Component ─────────────────────────────────────────────────────────────────
 
 export default function RegisterForm() {
   const [form, setForm] = useState<FormState>(EMPTY);
@@ -43,12 +74,22 @@ export default function RegisterForm() {
   const [globalError, setGlobalError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
-  const [hospitalId, setHospitalId] = useState<string | null>(null);
-  const [copied, setCopied] = useState(false);
+  const [hospitals, setHospitals] = useState<HospitalOption[]>([]);
+  const [success, setSuccess] = useState<RegisterResponse | null>(null);
 
-  // ── helpers ───────────────────────────────────────────────────
+  useEffect(() => {
+    api
+      .get<HospitalListResponse>("/api/v1/public/hospitals", {
+        params: { page_size: 100 },
+      })
+      .then(({ data }) => setHospitals(data.data))
+      .catch(() => setHospitals([]));
+  }, []);
+
   function handleChange(field: keyof FormState) {
-    return (e: React.ChangeEvent<HTMLInputElement>) => {
+    return (
+      e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>
+    ) => {
       setForm((prev) => ({ ...prev, [field]: e.target.value }));
       if (fieldErrors[field]) {
         setFieldErrors((prev) => ({ ...prev, [field]: undefined }));
@@ -56,34 +97,85 @@ export default function RegisterForm() {
     };
   }
 
-  // ── validation ────────────────────────────────────────────────
   function validate(): boolean {
     const errors: FieldErrors = {};
 
-    if (!form.hospital_name.trim())
-      errors.hospital_name = "Hospital name is required.";
-    if (!form.first_name.trim())
-      errors.first_name = "First name is required.";
-    if (!form.last_name.trim())
-      errors.last_name = "Last name is required.";
-    if (!form.email.trim())
-      errors.email = "Email is required.";
-    else if (!/\S+@\S+\.\S+/.test(form.email))
-      errors.email = "Enter a valid email address.";
-    if (!form.password)
-      errors.password = "Password is required.";
-    else if (form.password.length < 8)
-      errors.password = "Password must be at least 8 characters.";
-    if (!form.confirm_password)
-      errors.confirm_password = "Please confirm your password.";
-    else if (form.password !== form.confirm_password)
-      errors.confirm_password = "Passwords do not match.";
+    if (!form.name.trim()) errors.name = "Name is required.";
+    if (!form.email.trim()) errors.email = "Email is required.";
+    else if (!/\S+@\S+\.\S+/.test(form.email)) errors.email = "Enter a valid email address.";
+    if (!form.phone.trim()) errors.phone = "Phone number is required.";
+    if (!form.password) errors.password = "Password is required.";
+    else if (form.password.length < 8) errors.password = "Password must be at least 8 characters.";
+    if (!form.confirm_password) errors.confirm_password = "Please confirm your password.";
+    else if (form.password !== form.confirm_password) errors.confirm_password = "Passwords do not match.";
+
+    if (form.role === UserRole.DOCTOR) {
+      if (!form.specialization.trim()) errors.specialization = "Specialization is required.";
+      if (!form.gender) errors.gender = "Gender is required.";
+
+      if (form.work_type === "hospital") {
+        if (form.affiliation_mode === "existing" && !form.hospital_id) {
+          errors.hospital_id = "Select a hospital.";
+        }
+        if (form.affiliation_mode === "manual" && !form.pending_hospital_name.trim()) {
+          errors.pending_hospital_name = "Hospital name is required.";
+        }
+      }
+
+      if (form.work_type === "clinic") {
+        if (!form.clinic_name.trim()) errors.clinic_name = "Clinic name is required.";
+        if (!form.clinic_city.trim()) errors.clinic_city = "Clinic city is required.";
+      }
+    }
 
     setFieldErrors(errors);
     return Object.keys(errors).length === 0;
   }
 
-  // ── submit ────────────────────────────────────────────────────
+  function buildPayload(): RegisterRequest {
+    const payload: RegisterRequest = {
+      email: form.email.trim(),
+      phone: form.phone.trim(),
+      password: form.password,
+      name: form.name.trim(),
+      role: form.role,
+    };
+
+    if (form.role !== UserRole.DOCTOR) return payload;
+
+    payload.specialization = form.specialization.trim();
+    payload.work_type = form.work_type;
+    payload.gender = form.gender as Gender;
+
+    if (form.qualification.trim()) payload.qualification = form.qualification.trim();
+    if (form.registration_number.trim()) {
+      payload.registration_number = form.registration_number.trim();
+    }
+    if (form.experience_years.trim()) {
+      payload.experience_years = Number(form.experience_years);
+    }
+
+    if (form.work_type === "hospital") {
+      if (form.affiliation_mode === "existing") {
+        payload.hospital_id = form.hospital_id;
+      } else {
+        payload.pending_hospital_name = form.pending_hospital_name.trim();
+        if (form.pending_hospital_city.trim()) {
+          payload.pending_hospital_city = form.pending_hospital_city.trim();
+        }
+        if (form.pending_hospital_state.trim()) {
+          payload.pending_hospital_state = form.pending_hospital_state.trim();
+        }
+      }
+    } else {
+      payload.clinic_name = form.clinic_name.trim();
+      payload.clinic_city = form.clinic_city.trim();
+      if (form.clinic_address.trim()) payload.clinic_address = form.clinic_address.trim();
+    }
+
+    return payload;
+  }
+
   async function handleSubmit(e: FormEvent) {
     e.preventDefault();
     setGlobalError(null);
@@ -91,14 +183,8 @@ export default function RegisterForm() {
 
     setLoading(true);
     try {
-      const res = await register({
-        hospital_name: form.hospital_name.trim(),
-        first_name: form.first_name.trim(),
-        last_name: form.last_name.trim(),
-        email: form.email.trim(),
-        password: form.password,
-      });
-      setHospitalId(res.hospital_id);
+      const res = await register(buildPayload());
+      setSuccess(res);
     } catch (err) {
       setGlobalError(parseApiError(err));
     } finally {
@@ -106,20 +192,10 @@ export default function RegisterForm() {
     }
   }
 
-  // ── copy hospital id ──────────────────────────────────────────
-  async function handleCopy() {
-    if (!hospitalId) return;
-    await navigator.clipboard.writeText(hospitalId);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
-  }
-
-  // ── success screen ────────────────────────────────────────────
-  if (hospitalId) {
+  if (success) {
     return (
       <div className="min-h-screen bg-[var(--gray-50)] flex items-center justify-center px-4">
         <div className="w-full max-w-md">
-          {/* Logo */}
           <div className="text-center mb-8">
             <Link href="/" className="inline-flex items-center gap-2 mb-6">
               <div className="w-9 h-9 rounded-[var(--radius-md)] bg-[var(--accent)] flex items-center justify-center">
@@ -132,85 +208,23 @@ export default function RegisterForm() {
           </div>
 
           <div className="card p-6 flex flex-col gap-5">
-            {/* Success icon + heading */}
             <div className="flex flex-col items-center text-center gap-3">
-              <div
-                className="w-12 h-12 rounded-full flex items-center justify-center"
-                style={{ background: "var(--success-bg)" }}
-              >
+              <div className="w-12 h-12 rounded-full flex items-center justify-center" style={{ background: "var(--success-bg)" }}>
                 <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" style={{ color: "var(--success)" }}>
                   <polyline points="20 6 9 17 4 12" />
                 </svg>
               </div>
               <div>
                 <h2 className="text-base font-semibold text-[var(--text-primary)]">
-                  Hospital registered!
+                  Registration submitted
                 </h2>
-                <p className="text-sm text-[var(--text-muted)] mt-1">
-                  Save your Hospital ID — you and your staff will need it to log in.
-                </p>
+                <p className="text-sm text-[var(--text-muted)] mt-1">{success.message}</p>
               </div>
             </div>
 
-            {/* Hospital ID box */}
-            <div
-              className="rounded-lg border p-4 flex flex-col gap-2"
-              style={{ background: "var(--gray-50)", borderColor: "var(--border)" }}
-            >
-              <p className="text-xs font-semibold text-[var(--text-muted)] uppercase tracking-wide">
-                Your Hospital ID
-              </p>
-              <div className="flex items-center justify-between gap-3">
-                <p className="font-mono text-sm font-medium text-[var(--text-primary)] break-all">
-                  {hospitalId}
-                </p>
-                <button
-                  onClick={handleCopy}
-                  className="shrink-0 flex items-center gap-1.5 h-8 px-3 rounded-[var(--radius-md)] text-xs font-medium transition-colors"
-                  style={{
-                    background: copied ? "var(--success-bg)" : "var(--gray-100)",
-                    color: copied ? "var(--success)" : "var(--text-secondary)",
-                  }}
-                >
-                  {copied ? (
-                    <>
-                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
-                        <polyline points="20 6 9 17 4 12" />
-                      </svg>
-                      Copied
-                    </>
-                  ) : (
-                    <>
-                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
-                        <rect x="9" y="9" width="13" height="13" rx="2" ry="2"/>
-                        <path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/>
-                      </svg>
-                      Copy
-                    </>
-                  )}
-                </button>
-              </div>
-            </div>
-
-            {/* Warning note */}
-            <div
-              className="rounded-lg px-4 py-3 flex items-start gap-3"
-              style={{ background: "var(--warning-bg)", border: "1px solid var(--warning)" }}
-            >
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" className="shrink-0 mt-0.5" style={{ color: "var(--warning)" }}>
-                <path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/>
-                <line x1="12" y1="9" x2="12" y2="13"/>
-                <line x1="12" y1="17" x2="12.01" y2="17"/>
-              </svg>
-              <p className="text-xs" style={{ color: "var(--warning)" }}>
-                Store this ID somewhere safe. Share it with your doctors and staff — they will need it along with their credentials every time they log in.
-              </p>
-            </div>
-
-            {/* Go to login */}
             <Link href="/login">
               <Button variant="primary" size="lg" className="w-full">
-                Continue to login →
+                Continue to login
               </Button>
             </Link>
           </div>
@@ -219,11 +233,9 @@ export default function RegisterForm() {
     );
   }
 
-  // ── register form ─────────────────────────────────────────────
   return (
-    <div className="min-h-screen bg-[var(--gray-50)] flex items-center justify-center px-4">
-      <div className="w-full max-w-md">
-        {/* Logo + heading */}
+    <div className="min-h-screen bg-[var(--gray-50)] flex items-center justify-center px-4 py-8">
+      <div className="w-full max-w-xl">
         <div className="text-center mb-8">
           <Link href="/" className="inline-flex items-center gap-2 mb-6 group">
             <div className="w-9 h-9 rounded-[var(--radius-md)] bg-[var(--accent)] flex items-center justify-center">
@@ -234,14 +246,13 @@ export default function RegisterForm() {
             <span className="font-semibold text-[var(--text-primary)] text-lg tracking-tight">MedFlow</span>
           </Link>
           <h1 className="text-xl font-semibold text-[var(--text-primary)] mb-1">
-            Set up your hospital
+            Create your account
           </h1>
           <p className="text-sm text-[var(--text-muted)]">
-            Create your MedFlow account and hospital in one step
+            Patients can log in after registration; doctors are reviewed before access.
           </p>
         </div>
 
-        {/* Form card */}
         <div className="card p-6">
           {globalError && (
             <div className="mb-5 px-4 py-3 rounded-[var(--radius-md)] bg-[var(--error-bg)] border border-red-200 flex items-start gap-3">
@@ -255,146 +266,155 @@ export default function RegisterForm() {
           )}
 
           <form onSubmit={handleSubmit} noValidate className="flex flex-col gap-4">
-
-            {/* Hospital */}
-            <div className="flex flex-col gap-1.5">
-              <p className="text-xs font-semibold text-[var(--text-muted)] uppercase tracking-wide">
-                Hospital
-              </p>
-              <Input
-                label="Hospital name"
-                placeholder="City General Hospital"
-                value={form.hospital_name}
-                onChange={handleChange("hospital_name")}
-                error={fieldErrors.hospital_name}
-                autoComplete="organization"
-                required
-                leftAddon={
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
-                    <path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/>
-                    <polyline points="9 22 9 12 15 12 15 22"/>
-                  </svg>
-                }
-              />
+            <div className="grid grid-cols-2 gap-2">
+              <button
+                type="button"
+                onClick={() => setForm((prev) => ({ ...prev, role: UserRole.PATIENT }))}
+                className={`h-10 rounded-[var(--radius-md)] border text-sm font-medium transition-colors ${
+                  form.role === UserRole.PATIENT
+                    ? "border-[var(--accent)] bg-[var(--accent-light)] text-[var(--accent)]"
+                    : "border-[var(--border)] bg-white text-[var(--text-secondary)]"
+                }`}
+              >
+                Patient
+              </button>
+              <button
+                type="button"
+                onClick={() => setForm((prev) => ({ ...prev, role: UserRole.DOCTOR }))}
+                className={`h-10 rounded-[var(--radius-md)] border text-sm font-medium transition-colors ${
+                  form.role === UserRole.DOCTOR
+                    ? "border-[var(--accent)] bg-[var(--accent-light)] text-[var(--accent)]"
+                    : "border-[var(--border)] bg-white text-[var(--text-secondary)]"
+                }`}
+              >
+                Doctor
+              </button>
             </div>
 
-            <div className="border-t border-[var(--border)]" />
-
-            {/* Admin account */}
-            <div className="flex flex-col gap-3">
-              <p className="text-xs font-semibold text-[var(--text-muted)] uppercase tracking-wide">
-                Admin account
-              </p>
-              <div className="grid grid-cols-2 gap-3">
-                <Input
-                  label="First name"
-                  placeholder="Arjun"
-                  value={form.first_name}
-                  onChange={handleChange("first_name")}
-                  error={fieldErrors.first_name}
-                  autoComplete="given-name"
-                  required
-                />
-                <Input
-                  label="Last name"
-                  placeholder="Sharma"
-                  value={form.last_name}
-                  onChange={handleChange("last_name")}
-                  error={fieldErrors.last_name}
-                  autoComplete="family-name"
-                  required
-                />
-              </div>
-              <Input
-                label="Email"
-                type="email"
-                placeholder="admin@hospital.com"
-                value={form.email}
-                onChange={handleChange("email")}
-                error={fieldErrors.email}
-                autoComplete="email"
-                required
-                leftAddon={
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
-                    <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/>
-                    <polyline points="22,6 12,13 2,6"/>
-                  </svg>
-                }
-              />
+            <Input label="Full name" value={form.name} onChange={handleChange("name")} error={fieldErrors.name} autoComplete="name" required />
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <Input label="Email" type="email" value={form.email} onChange={handleChange("email")} error={fieldErrors.email} autoComplete="email" required />
+              <Input label="Phone" value={form.phone} onChange={handleChange("phone")} error={fieldErrors.phone} autoComplete="tel" required />
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <Input
                 label="Password"
                 type={showPassword ? "text" : "password"}
-                placeholder="Min. 8 characters"
                 value={form.password}
                 onChange={handleChange("password")}
                 error={fieldErrors.password}
                 autoComplete="new-password"
                 required
-                leftAddon={
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
-                    <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
-                    <path d="M7 11V7a5 5 0 0110 0v4"/>
-                  </svg>
-                }
-                rightAddon={
-                  <button
-                    type="button"
-                    onClick={() => setShowPassword((v) => !v)}
-                    className="cursor-pointer text-[var(--text-muted)] hover:text-[var(--text-secondary)] transition-colors"
-                    aria-label={showPassword ? "Hide password" : "Show password"}
-                  >
-                    {showPassword ? (
-                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
-                        <path d="M17.94 17.94A10.07 10.07 0 0112 20c-7 0-11-8-11-8a18.45 18.45 0 015.06-5.94"/>
-                        <path d="M9.9 4.24A9.12 9.12 0 0112 4c7 0 11 8 11 8a18.5 18.5 0 01-2.16 3.19"/>
-                        <line x1="1" y1="1" x2="23" y2="23"/>
-                      </svg>
-                    ) : (
-                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
-                        <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
-                        <circle cx="12" cy="12" r="3"/>
-                      </svg>
-                    )}
-                  </button>
-                }
               />
               <Input
                 label="Confirm password"
                 type={showPassword ? "text" : "password"}
-                placeholder="Re-enter password"
                 value={form.confirm_password}
                 onChange={handleChange("confirm_password")}
                 error={fieldErrors.confirm_password}
                 autoComplete="new-password"
                 required
-                leftAddon={
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
-                    <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
-                    <path d="M7 11V7a5 5 0 0110 0v4"/>
-                  </svg>
-                }
               />
             </div>
+            <label className="inline-flex items-center gap-2 text-sm text-[var(--text-secondary)]">
+              <input
+                type="checkbox"
+                checked={showPassword}
+                onChange={(e) => setShowPassword(e.target.checked)}
+                className="h-4 w-4 rounded border-[var(--border)]"
+              />
+              Show password
+            </label>
 
-            <Button
-              type="submit"
-              variant="primary"
-              size="lg"
-              loading={loading}
-              className="w-full mt-1"
-            >
-              {loading ? "Creating account…" : "Create hospital account"}
+            {form.role === UserRole.DOCTOR && (
+              <>
+                <div className="border-t border-[var(--border)] my-1" />
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <Input label="Specialization" value={form.specialization} onChange={handleChange("specialization")} error={fieldErrors.specialization} required />
+                  <Input label="Qualification" value={form.qualification} onChange={handleChange("qualification")} error={fieldErrors.qualification} />
+                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                  <Input label="Registration no." value={form.registration_number} onChange={handleChange("registration_number")} error={fieldErrors.registration_number} />
+                  <Input label="Experience years" type="number" min="0" value={form.experience_years} onChange={handleChange("experience_years")} error={fieldErrors.experience_years} />
+                  <div className="flex flex-col gap-1.5">
+                    <label className="text-sm font-medium text-[var(--text-primary)]">
+                      Gender<span className="ml-1 text-[var(--error)]">*</span>
+                    </label>
+                    <select value={form.gender} onChange={handleChange("gender")} className="w-full h-9 rounded-[var(--radius-md)] border border-[var(--border)] bg-white px-3 text-sm">
+                      <option value="">Select</option>
+                      <option value={Gender.MALE}>Male</option>
+                      <option value={Gender.FEMALE}>Female</option>
+                      <option value={Gender.OTHER}>Other</option>
+                      <option value={Gender.PREFER_NOT_TO_SAY}>Prefer not to say</option>
+                    </select>
+                    {fieldErrors.gender && <p className="text-xs text-[var(--error)]">{fieldErrors.gender}</p>}
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-2">
+                  <button type="button" onClick={() => setForm((prev) => ({ ...prev, work_type: "hospital" }))} className={`h-10 rounded-[var(--radius-md)] border text-sm font-medium ${form.work_type === "hospital" ? "border-[var(--accent)] bg-[var(--accent-light)] text-[var(--accent)]" : "border-[var(--border)] bg-white text-[var(--text-secondary)]"}`}>
+                    Hospital
+                  </button>
+                  <button type="button" onClick={() => setForm((prev) => ({ ...prev, work_type: "clinic" }))} className={`h-10 rounded-[var(--radius-md)] border text-sm font-medium ${form.work_type === "clinic" ? "border-[var(--accent)] bg-[var(--accent-light)] text-[var(--accent)]" : "border-[var(--border)] bg-white text-[var(--text-secondary)]"}`}>
+                    Clinic
+                  </button>
+                </div>
+
+                {form.work_type === "hospital" ? (
+                  <div className="flex flex-col gap-3">
+                    <div className="grid grid-cols-2 gap-2">
+                      <button type="button" onClick={() => setForm((prev) => ({ ...prev, affiliation_mode: "existing" }))} className={`h-9 rounded-[var(--radius-md)] border text-sm ${form.affiliation_mode === "existing" ? "border-[var(--accent)] bg-[var(--accent-light)] text-[var(--accent)]" : "border-[var(--border)] bg-white text-[var(--text-secondary)]"}`}>
+                        Existing hospital
+                      </button>
+                      <button type="button" onClick={() => setForm((prev) => ({ ...prev, affiliation_mode: "manual" }))} className={`h-9 rounded-[var(--radius-md)] border text-sm ${form.affiliation_mode === "manual" ? "border-[var(--accent)] bg-[var(--accent-light)] text-[var(--accent)]" : "border-[var(--border)] bg-white text-[var(--text-secondary)]"}`}>
+                        Enter manually
+                      </button>
+                    </div>
+
+                    {form.affiliation_mode === "existing" ? (
+                      <div className="flex flex-col gap-1.5">
+                        <label className="text-sm font-medium text-[var(--text-primary)]">
+                          Hospital<span className="ml-1 text-[var(--error)]">*</span>
+                        </label>
+                        <select value={form.hospital_id} onChange={handleChange("hospital_id")} className="w-full h-9 rounded-[var(--radius-md)] border border-[var(--border)] bg-white px-3 text-sm">
+                          <option value="">Select hospital</option>
+                          {hospitals.map((hospital) => (
+                            <option key={hospital.id} value={hospital.id}>
+                              {hospital.name}{hospital.city ? `, ${hospital.city}` : ""}
+                            </option>
+                          ))}
+                        </select>
+                        {fieldErrors.hospital_id && <p className="text-xs text-[var(--error)]">{fieldErrors.hospital_id}</p>}
+                      </div>
+                    ) : (
+                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                        <Input label="Hospital name" value={form.pending_hospital_name} onChange={handleChange("pending_hospital_name")} error={fieldErrors.pending_hospital_name} required />
+                        <Input label="City" value={form.pending_hospital_city} onChange={handleChange("pending_hospital_city")} error={fieldErrors.pending_hospital_city} />
+                        <Input label="State" value={form.pending_hospital_state} onChange={handleChange("pending_hospital_state")} error={fieldErrors.pending_hospital_state} />
+                      </div>
+                    )}
+                  </div>
+                ) : (
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <Input label="Clinic name" value={form.clinic_name} onChange={handleChange("clinic_name")} error={fieldErrors.clinic_name} required />
+                    <Input label="Clinic city" value={form.clinic_city} onChange={handleChange("clinic_city")} error={fieldErrors.clinic_city} required />
+                    <div className="sm:col-span-2">
+                      <Input label="Clinic address" value={form.clinic_address} onChange={handleChange("clinic_address")} error={fieldErrors.clinic_address} />
+                    </div>
+                  </div>
+                )}
+              </>
+            )}
+
+            <Button type="submit" variant="primary" size="lg" loading={loading} className="w-full mt-1">
+              {loading ? "Creating account..." : "Create account"}
             </Button>
           </form>
         </div>
 
         <p className="text-center text-xs text-[var(--text-muted)] mt-6">
           Already have an account?{" "}
-          <Link
-            href="/login"
-            className="font-medium hover:text-[var(--text-secondary)] transition-colors"
-            style={{ color: "var(--accent)" }}
-          >
+          <Link href="/login" className="font-medium hover:text-[var(--text-secondary)] transition-colors" style={{ color: "var(--accent)" }}>
             Log in
           </Link>
         </p>

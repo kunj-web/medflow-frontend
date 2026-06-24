@@ -1,35 +1,24 @@
-import api, { tokenStore, cookieStore, parseApiError } from "./api";
+import api, { cookieStore, parseApiError, tokenStore } from "./api";
 import {
   LoginRequest,
-  TokenResponse,
-  UserProfile,
   RegisterRequest,
   RegisterResponse,
+  TokenResponse,
+  UserProfile,
 } from "@/types/auth";
-
-// ─── Register ─────────────────────────────────────────────────────────────────
 
 export async function register(payload: RegisterRequest): Promise<RegisterResponse> {
   const { data } = await api.post<RegisterResponse>("/api/v1/auth/register", payload);
   return data;
 }
 
-// ─── Login ────────────────────────────────────────────────────────────────────
-
 export async function login(credentials: LoginRequest): Promise<UserProfile> {
   const { data } = await api.post<TokenResponse>("/api/v1/auth/login", credentials);
 
-  // Persist tokens — both stores must stay in sync
   tokenStore.set(data.access_token);
   tokenStore.setRefresh(data.refresh_token);
   cookieStore.set(data.access_token);
 
-  // Persist hospital_id for HospitalContext
-  if (typeof window !== "undefined") {
-    localStorage.setItem("hospital_id", credentials.hospital_id);
-  }
-
-  // Fetch and cache user profile
   const user = await getMe();
   if (typeof window !== "undefined") {
     localStorage.setItem("user", JSON.stringify(user));
@@ -38,22 +27,15 @@ export async function login(credentials: LoginRequest): Promise<UserProfile> {
   return user;
 }
 
-// ─── Logout ───────────────────────────────────────────────────────────────────
-
 export function logout(): void {
   tokenStore.clear();
   cookieStore.clear();
-  
 }
-
-// ─── Get Current User ─────────────────────────────────────────────────────────
 
 export async function getMe(): Promise<UserProfile> {
   const { data } = await api.get<UserProfile>("/api/v1/auth/me");
   return data;
 }
-
-// ─── Refresh Token ────────────────────────────────────────────────────────────
 
 export async function refreshToken(): Promise<string> {
   const refresh = tokenStore.getRefresh();
@@ -69,8 +51,6 @@ export async function refreshToken(): Promise<string> {
 
   return data.access_token;
 }
-
-// ─── Auth State Checks ────────────────────────────────────────────────────────
 
 export function isAuthenticated(): boolean {
   return !!tokenStore.get();

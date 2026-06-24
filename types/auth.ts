@@ -1,9 +1,9 @@
-import { UserRole } from "./common";
+import { Gender, UserRole } from "./common";
 
-// ─── Requests ─────────────────────────────────────────────────────────────────
+export type AccountStatus = "pending" | "active" | "rejected";
+export type WorkType = "hospital" | "clinic";
 
 export interface LoginRequest {
-  hospital_id: string;
   email: string;
   password: string;
 }
@@ -13,41 +13,55 @@ export interface RefreshRequest {
 }
 
 export interface RegisterRequest {
-  hospital_name: string;
-  first_name: string;
-  last_name: string;
   email: string;
+  phone: string;
   password: string;
+  name: string;
+  role: UserRole.PATIENT | UserRole.DOCTOR;
+  specialization?: string;
+  qualification?: string;
+  registration_number?: string;
+  experience_years?: number;
+  work_type?: WorkType;
+  gender?: Gender;
+  hospital_id?: string;
+  pending_hospital_name?: string;
+  pending_hospital_city?: string;
+  pending_hospital_state?: string;
+  clinic_name?: string;
+  clinic_city?: string;
+  clinic_address?: string;
 }
 
-// ─── Responses ────────────────────────────────────────────────────────────────
+export interface RegisterResponse {
+  user_id: string;
+  role: UserRole;
+  status: AccountStatus;
+  message: string;
+}
 
 export interface TokenResponse {
   access_token: string;
   refresh_token: string;
   token_type: string;
+  role: UserRole;
+  status: AccountStatus;
+  is_super_admin: boolean;
 }
 
 export interface UserProfile {
   user_id: string;
-  email: string;
   role: UserRole;
-  hospital_id: string;
+  status: AccountStatus;
+  is_super_admin: boolean;
+  email?: string;
   first_name?: string;
   last_name?: string;
+  hospital_id?: string | null;
 }
-
-export interface RegisterResponse {
-  hospital_id: string;
-  message: string;
-}
-
-// ─── Stored Auth State ────────────────────────────────────────────────────────
 
 export interface StoredAuth {
   access_token: string;
   refresh_token: string;
-  hospital_id: string;
   user: UserProfile;
 }
-

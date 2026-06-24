@@ -8,13 +8,11 @@ import Button from "@/components/ui/Button";
 import Input from "@/components/ui/Input";
 
 interface FormState {
-  hospital_id: string;
   email: string;
   password: string;
 }
 
 interface FieldErrors {
-  hospital_id?: string;
   email?: string;
   password?: string;
 }
@@ -25,7 +23,6 @@ export default function LoginForm() {
   const from = searchParams.get("from") ?? "/dashboard";
 
   const [form, setForm] = useState<FormState>({
-    hospital_id: "",
     email: "",
     password: "",
   });
@@ -36,7 +33,6 @@ export default function LoginForm() {
 
   function validate(): boolean {
     const errors: FieldErrors = {};
-    if (!form.hospital_id.trim()) errors.hospital_id = "Hospital ID is required.";
     if (!form.email.trim()) errors.email = "Email is required.";
     else if (!/\S+@\S+\.\S+/.test(form.email)) errors.email = "Enter a valid email.";
     if (!form.password) errors.password = "Password is required.";
@@ -52,7 +48,6 @@ export default function LoginForm() {
     setLoading(true);
     try {
       await login({
-        hospital_id: form.hospital_id.trim(),
         email: form.email.trim(),
         password: form.password,
       });
@@ -87,7 +82,7 @@ export default function LoginForm() {
             <span className="font-semibold text-[var(--text-primary)] text-lg tracking-tight">MedFlow</span>
           </Link>
           <h1 className="text-xl font-semibold text-[var(--text-primary)] mb-1">Sign in to your portal</h1>
-          <p className="text-sm text-[var(--text-muted)]">Enter your hospital credentials to continue</p>
+          <p className="text-sm text-[var(--text-muted)]">Enter your email and password to continue</p>
         </div>
 
         {/* Form card */}
@@ -102,22 +97,6 @@ export default function LoginForm() {
           )}
 
           <form onSubmit={handleSubmit} noValidate className="flex flex-col gap-4">
-            <Input
-              label="Hospital ID"
-              placeholder="e.g. hosp_01abc..."
-              value={form.hospital_id}
-              onChange={handleChange("hospital_id")}
-              error={fieldErrors.hospital_id}
-              autoComplete="organization"
-              required
-              leftAddon={
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
-                  <path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/>
-                  <polyline points="9 22 9 12 15 12 15 22"/>
-                </svg>
-              }
-            />
-
             <Input
               label="Email"
               type="email"
