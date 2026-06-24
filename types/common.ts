@@ -1,15 +1,16 @@
 // ─── Enums (mirror backend exactly) ─────────────────────────────────────────
 
 export enum UserRole {
-  ADMIN = "ADMIN",
-  DOCTOR = "DOCTOR",
-  PATIENT = "PATIENT",
+  ADMIN = "website_admin",
+  DOCTOR = "doctor",
+  PATIENT = "patient",
 }
 
 export enum Gender {
-  MALE = "MALE",
-  FEMALE = "FEMALE",
-  OTHER = "OTHER",
+  MALE = "male",
+  FEMALE = "female",
+  OTHER = "other",
+  PREFER_NOT_TO_SAY = "prefer_not_to_say",
 }
 
 export enum BloodGroup {
@@ -24,13 +25,13 @@ export enum BloodGroup {
 }
 
 export enum DayOfWeek {
-  MONDAY = "MONDAY",
-  TUESDAY = "TUESDAY",
-  WEDNESDAY = "WEDNESDAY",
-  THURSDAY = "THURSDAY",
-  FRIDAY = "FRIDAY",
-  SATURDAY = "SATURDAY",
-  SUNDAY = "SUNDAY",
+  MONDAY = "monday",
+  TUESDAY = "tuesday",
+  WEDNESDAY = "wednesday",
+  THURSDAY = "thursday",
+  FRIDAY = "friday",
+  SATURDAY = "saturday",
+  SUNDAY = "sunday",
 }
 
 // ─── Pagination ───────────────────────────────────────────────────────────────
