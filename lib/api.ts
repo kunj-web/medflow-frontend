@@ -21,7 +21,6 @@ export const tokenStore = {
     if (typeof window === "undefined") return;
     localStorage.removeItem("access_token");
     localStorage.removeItem("refresh_token");
-    localStorage.removeItem("hospital_id");
     localStorage.removeItem("user");
   },
   getRefresh(): string | null {

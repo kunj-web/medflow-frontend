@@ -1,9 +1,9 @@
 const steps = [
   {
     step: "01",
-    title: "Your hospital gets a tenant",
+    title: "Patients and doctors join the network",
     description:
-      "Each hospital is fully isolated. Doctors, patients, appointments, and invoices are scoped to your hospital_id. No data bleeds between tenants — ever.",
+      "Patients can create active accounts right away, while doctors submit their hospital or clinic affiliation for review before they start accepting bookings.",
   },
   {
     step: "02",
@@ -15,7 +15,7 @@ const steps = [
     step: "03",
     title: "Operations run through one dashboard",
     description:
-      "Book appointments, issue invoices, track payments, and manage the patient queue — all from a single role-aware interface for admins, doctors, and staff.",
+      "Book appointments, issue invoices, track payments, and manage the patient queue from a single role-aware interface for admins, doctors, and staff.",
   },
 ];
 
@@ -23,7 +23,6 @@ export default function HowItWorks() {
   return (
     <section id="how-it-works" className="py-24 bg-white">
       <div className="max-w-6xl mx-auto px-6">
-        {/* Section header */}
         <div className="mb-14 max-w-xl">
           <p className="text-xs font-medium uppercase tracking-widest text-[var(--accent)] mb-3">
             How it works
@@ -33,30 +32,27 @@ export default function HowItWorks() {
           </h2>
         </div>
 
-        {/* Steps */}
         <div className="flex flex-col md:flex-row gap-0 md:gap-0 relative">
-          {/* Connector line — desktop only */}
           <div className="hidden md:block absolute top-7 left-[calc(16.67%+1px)] right-[calc(16.67%+1px)] h-px bg-[var(--border)] z-0" />
 
           {steps.map((s, i) => (
             <div key={s.step} className="flex-1 flex flex-col gap-4 relative z-10">
-              {/* Step number bubble */}
               <div className="flex md:block items-center gap-4 md:gap-0 mb-0 md:mb-4">
                 <div className="w-14 h-14 rounded-full border-2 border-[var(--border)] bg-white flex items-center justify-center shrink-0">
                   <span className="font-mono text-sm font-medium text-[var(--accent)]">
                     {s.step}
                   </span>
                 </div>
-                {/* Mobile connector */}
                 {i < steps.length - 1 && (
                   <div className="md:hidden flex-1 h-px bg-[var(--border)]" />
                 )}
               </div>
 
-              {/* Content — padded so it doesn't overlap the connector */}
               <div className="md:pr-8">
                 <h3 className="font-semibold text-[var(--text-primary)] mb-2">{s.title}</h3>
-                <p className="text-sm text-[var(--text-secondary)] leading-relaxed">{s.description}</p>
+                <p className="text-sm text-[var(--text-secondary)] leading-relaxed">
+                  {s.description}
+                </p>
               </div>
             </div>
           ))}

@@ -3,7 +3,6 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/hooks/useAuth";
-import { useHospital } from "@/context/HospitalContext";
 import { logout } from "@/lib/auth";
 import { cn, getInitials } from "@/lib/utils";
 
@@ -14,7 +13,6 @@ interface TopbarProps {
 export default function Topbar({ title }: TopbarProps) {
   const router = useRouter();
   const { user } = useAuth();
-  const { hospital } = useHospital();
   const [dropdownOpen, setDropdownOpen] = useState(false);
 
   function handleLogout() {
@@ -23,19 +21,18 @@ export default function Topbar({ title }: TopbarProps) {
   }
 
   const initials = getInitials(user?.first_name ?? "U", user?.last_name);
+  const roleLabel = user?.role?.replace("_", " ") ?? "-";
 
   return (
     <header className="h-14 shrink-0 flex items-center justify-between px-6 border-b border-[var(--border)] bg-white sticky top-0 z-30">
-      {/* Left — page title or hospital name */}
       <div className="flex items-center gap-2">
         {title ? (
           <h1 className="text-sm font-semibold text-[var(--text-primary)]">{title}</h1>
         ) : (
-          <span className="text-sm text-[var(--text-muted)]">{hospital?.name ?? "MedFlow"}</span>
+          <span className="text-sm text-[var(--text-muted)]">MedFlow</span>
         )}
       </div>
 
-      {/* Right — avatar + dropdown */}
       <div className="relative">
         <button
           onClick={() => setDropdownOpen((v) => !v)}
@@ -50,37 +47,37 @@ export default function Topbar({ title }: TopbarProps) {
               {user?.first_name ?? "User"} {user?.last_name ?? ""}
             </p>
             <p className="text-xs text-[var(--text-muted)] capitalize">
-              {user?.role?.toLowerCase() ?? "—"}
+              {roleLabel}
             </p>
           </div>
           <svg
-            className={cn("w-3.5 h-3.5 text-[var(--text-muted)] transition-transform duration-150", dropdownOpen && "rotate-180")}
-            viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"
+            className={cn(
+              "w-3.5 h-3.5 text-[var(--text-muted)] transition-transform duration-150",
+              dropdownOpen && "rotate-180"
+            )}
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
           >
             <polyline points="6 9 12 15 18 9"/>
           </svg>
         </button>
 
-        {/* Dropdown */}
         {dropdownOpen && (
           <>
-            {/* Backdrop */}
-            <div
-              className="fixed inset-0 z-30"
-              onClick={() => setDropdownOpen(false)}
-            />
+            <div className="fixed inset-0 z-30" onClick={() => setDropdownOpen(false)} />
             <div className="absolute right-0 top-full mt-1.5 w-48 bg-white border border-[var(--border)] rounded-[var(--radius-lg)] shadow-lg z-40 py-1 overflow-hidden">
-              {/* User info header */}
               <div className="px-3 py-2.5 border-b border-[var(--border)]">
                 <p className="text-xs font-medium text-[var(--text-primary)] truncate">
-                  {user?.email ?? "—"}
+                  {user?.email ?? "-"}
                 </p>
                 <p className="text-xs text-[var(--text-muted)] mt-0.5 truncate capitalize">
-                  {user?.role?.toLowerCase()} · {hospital?.name ?? "—"}
+                  {roleLabel}
                 </p>
               </div>
 
-              {/* Actions */}
               <div className="py-1">
                 <button
                   onClick={handleLogout}

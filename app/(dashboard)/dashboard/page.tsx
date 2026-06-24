@@ -2,7 +2,6 @@
 
 import Link from "next/link";
 import { useAuth } from "@/hooks/useAuth";
-import { useHospital } from "@/context/HospitalContext";
 import StatCard from "@/components/dashboard/StatCard";
 import PageHeader from "@/components/dashboard/PageHeader";
 import { Card } from "@/components/ui/Card";
@@ -108,10 +107,10 @@ const STATS = [
 
 export default function DashboardPage() {
   const { user } = useAuth();
-  const { hospital } = useHospital();
 
   const greeting = getGreeting();
   const firstName = user?.first_name ?? "there";
+  const roleLabel = user?.role?.replace("_", " ") ?? "workspace";
 
   const visibleActions = QUICK_ACTIONS.filter(
     (a) => !user?.role || a.roles.includes(user.role as UserRole)
@@ -121,7 +120,7 @@ export default function DashboardPage() {
     <div>
       <PageHeader
         title={`${greeting}, ${firstName}`}
-        subtitle={hospital?.name ? `${hospital.name} · Operations overview` : "Operations overview"}
+        subtitle={`${roleLabel} operations overview`}
       />
 
       {/* Stat cards */}
