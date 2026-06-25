@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { getStoredUser } from "@/lib/auth";
+import { getMe, getStoredUser, isAuthenticated } from "@/lib/auth";
 import { UserProfile } from "@/types/auth";
 import { UserRole } from "@/types/common";
 
@@ -10,8 +10,40 @@ export function useAuth() {
   const [loaded, setLoaded] = useState(false);
 
   useEffect(() => {
-    setUser(getStoredUser());
-    setLoaded(true);
+    let active = true;
+
+    async function hydrateUser() {
+      const stored = getStoredUser();
+      if (stored) {
+        if (active) {
+          setUser(stored);
+          setLoaded(true);
+        }
+        return;
+      }
+
+      if (!isAuthenticated()) {
+        if (active) setLoaded(true);
+        return;
+      }
+
+      try {
+        const fresh = await getMe();
+        if (!active) return;
+        localStorage.setItem("user", JSON.stringify(fresh));
+        setUser(fresh);
+      } catch {
+        if (active) setUser(null);
+      } finally {
+        if (active) setLoaded(true);
+      }
+    }
+
+    hydrateUser();
+
+    return () => {
+      active = false;
+    };
   }, []);
 
   const isAdmin = user?.role === UserRole.ADMIN;

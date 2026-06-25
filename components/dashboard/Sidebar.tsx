@@ -87,11 +87,12 @@ const NAV: NavItem[] = [
 
 export default function Sidebar() {
   const pathname = usePathname();
-  const { user } = useAuth();
+  const { user, loaded } = useAuth();
 
-  const visibleNav = NAV.filter(
-    (item) => !user?.role || item.roles.includes(user.role as UserRole)
-  );
+  const visibleNav =
+    loaded && user
+      ? NAV.filter((item) => item.roles.includes(user.role as UserRole))
+      : [];
 
   return (
     <aside className="w-56 shrink-0 h-screen sticky top-0 flex flex-col border-r border-[var(--border)] bg-white">
