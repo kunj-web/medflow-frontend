@@ -37,11 +37,11 @@ export enum DayOfWeek {
 // ─── Pagination ───────────────────────────────────────────────────────────────
 
 export interface PaginatedResponse<T> {
-  items: T[];
+  data: T[];
   total: number;
   page: number;
   page_size: number;
-  pages: number;
+  total_pages: number;
 }
 
 export interface PaginationParams {

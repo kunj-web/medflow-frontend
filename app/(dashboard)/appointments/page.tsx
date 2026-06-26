@@ -49,11 +49,11 @@ export default function AppointmentsPage() {
       if (dateFilter) params.date = dateFilter;
 
       const { data } = await api.get<PaginatedResponse<Appointment>>(
-        "/api/v1/appointments",
+        "/api/v1/appointments/",
         { params }
       );
-      setAppointments(data.items);
-      setTotalPages(data.pages);
+      setAppointments(data.data ?? []);
+      setTotalPages(data.total_pages ?? 1);
     } catch (err) {
       setFetchError(parseApiError(err));
     } finally {
@@ -83,7 +83,7 @@ export default function AppointmentsPage() {
   async function handleCancelConfirm(reason: string) {
     if (!cancelTarget) return;
     await api.post(`/api/v1/appointments/${cancelTarget.id}/cancel`, {
-      cancellation_reason: reason,
+      reason,
     });
     setCancelTarget(null);
     fetchAppointments();

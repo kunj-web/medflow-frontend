@@ -1,35 +1,37 @@
 import { PaginationParams } from "./common";
 
-// ─── Enums ────────────────────────────────────────────────────────────────────
-
 export enum AppointmentStatus {
-  SCHEDULED = "SCHEDULED",
-  COMPLETED = "COMPLETED",
-  CANCELLED = "CANCELLED",
-  NO_SHOW = "NO_SHOW",
+  SCHEDULED = "scheduled",
+  CONFIRMED = "confirmed",
+  IN_PROGRESS = "in_progress",
+  COMPLETED = "completed",
+  CANCELLED = "cancelled",
+  NO_SHOW = "no_show",
 }
 
 export enum AppointmentType {
-  IN_PERSON = "IN_PERSON",
-  TELECONSULT = "TELECONSULT",
+  CONSULTATION = "consultation",
+  FOLLOW_UP = "follow_up",
+  EMERGENCY = "emergency",
+  PROCEDURE = "procedure",
 }
-
-// ─── Appointment ──────────────────────────────────────────────────────────────
 
 export interface Appointment {
   id: string;
-  hospital_id: string;
-  doctor_id: string;
-  patient_id: string;
-  slot_time: string;        // naive ISO datetime string — no tz
-  token_number: number;
-  appointment_type: AppointmentType;
+  hospital_id: string | null;
+  doctor_id?: string;
+  patient_id?: string;
+  slot_time: string;
+  end_time?: string | null;
+  token_number: number | null;
+  type: AppointmentType;
   status: AppointmentStatus;
-  notes?: string;
-  cancellation_reason?: string;
+  chief_complaint?: string | null;
+  notes?: string | null;
+  cancellation_reason?: string | null;
   created_at: string;
-  deleted_at: string | null;
-  // relations (when fetched with_relations)
+  updated_at: string;
+  deleted_at?: string | null;
   doctor?: {
     id: string;
     first_name: string;
@@ -40,33 +42,28 @@ export interface Appointment {
     id: string;
     first_name: string;
     last_name: string;
-    phone: string;
+    phone?: string;
   };
 }
 
-// ─── Requests ─────────────────────────────────────────────────────────────────
-
 export interface AppointmentCreate {
   doctor_id: string;
-  patient_id: string;
-  slot_time: string;        // naive ISO datetime string
-  appointment_type: AppointmentType;
-  notes?: string;
+  slot_time: string;
+  type?: AppointmentType;
+  chief_complaint?: string;
 }
 
 export interface AppointmentCancel {
-  cancellation_reason: string;
+  reason: string;
 }
 
 export interface AppointmentReschedule {
-  slot_time: string;
+  new_slot_time: string;
 }
-
-// ─── Query Params ─────────────────────────────────────────────────────────────
 
 export interface AppointmentListParams extends PaginationParams {
   status?: AppointmentStatus;
-  date?: string;            // "YYYY-MM-DD"
+  date?: string;
   doctor_id?: string;
   patient_id?: string;
 }
