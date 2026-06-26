@@ -39,7 +39,7 @@ export interface DoctorLeave {
 }
 
 export interface Slot {
-  slot_time: string; // naive ISO datetime string
+  datetime: string; // naive ISO datetime string
   is_available: boolean;
 }
 

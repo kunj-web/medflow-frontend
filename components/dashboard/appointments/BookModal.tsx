@@ -52,7 +52,7 @@ export default function BookModal({ onSuccess, onClose }: BookModalProps) {
   const [selectedPatient, setSelectedPatient] = useState<Patient | null>(null);
   const [patientDropdownOpen, setPatientDropdownOpen] = useState(false);
 
-  const [apptType, setApptType] = useState<AppointmentType>(AppointmentType.IN_PERSON);
+  const [apptType, setApptType] = useState<AppointmentType>(AppointmentType.CONSULTATION);
   const [notes, setNotes] = useState("");
   const [step1Error, setStep1Error] = useState("");
 
@@ -77,7 +77,7 @@ export default function BookModal({ onSuccess, onClose }: BookModalProps) {
       .get<PaginatedResponse<Doctor>>("/api/v1/doctors", {
         params: { is_active: true, page_size: 100 },
       })
-      .then(({ data }) => setDoctors(data.items))
+      .then(({ data }) => setDoctors(data.data ?? []))
       .catch(() => {})
       .finally(() => setDoctorsLoading(false));
   }, []);
@@ -91,7 +91,7 @@ export default function BookModal({ onSuccess, onClose }: BookModalProps) {
       const { data } = await api.get<PaginatedResponse<Patient>>("/api/v1/patients", {
         params: { search: q, page_size: 20 },
       });
-      setPatients(data.items);
+      setPatients(data.data ?? []);
       setPatientDropdownOpen(true);
     } catch {
       setPatients([]);
@@ -147,12 +147,11 @@ export default function BookModal({ onSuccess, onClose }: BookModalProps) {
     try {
       const payload: AppointmentCreate = {
         doctor_id: selectedDoctor!.id,
-        patient_id: selectedPatient!.id,
-        slot_time: selectedSlot.slot_time,
-        appointment_type: apptType,
-        notes: notes.trim() || undefined,
+        slot_time: selectedSlot.datetime,
+        type: apptType,
+        chief_complaint: notes.trim() || undefined,
       };
-      await api.post("/api/v1/appointments", payload);
+      await api.post("/api/v1/appointments/", payload);
       onSuccess();
     } catch (err) {
       setSubmitError(parseApiError(err));
@@ -291,7 +290,7 @@ export default function BookModal({ onSuccess, onClose }: BookModalProps) {
               <div className="flex flex-col gap-1.5">
                 <label className="text-sm font-medium text-[var(--text-primary)]">Type</label>
                 <div className="flex gap-2">
-                  {[AppointmentType.IN_PERSON, AppointmentType.TELECONSULT].map((t) => (
+                  {[AppointmentType.CONSULTATION, AppointmentType.FOLLOW_UP].map((t) => (
                     <button
                       key={t}
                       onClick={() => setApptType(t)}
@@ -302,7 +301,7 @@ export default function BookModal({ onSuccess, onClose }: BookModalProps) {
                           : "border-[var(--border)] text-[var(--text-secondary)] hover:bg-[var(--gray-50)]"
                       )}
                     >
-                      {t === AppointmentType.IN_PERSON ? "In-person" : "Teleconsult"}
+                      {t === AppointmentType.CONSULTATION ? "Consultation" : "Follow-up"}
                     </button>
                   ))}
                 </div>
@@ -376,19 +375,19 @@ export default function BookModal({ onSuccess, onClose }: BookModalProps) {
                 <div className="grid grid-cols-3 gap-2">
                   {slots.map((slot) => (
                     <button
-                      key={slot.slot_time}
+                      key={slot.datetime}
                       disabled={!slot.is_available}
                       onClick={() => setSelectedSlot(slot)}
                       className={cn(
                         "py-2 px-3 rounded-[var(--radius-md)] border text-sm font-mono font-medium transition-colors",
                         !slot.is_available && "opacity-40 cursor-not-allowed bg-[var(--gray-100)] border-[var(--border)] text-[var(--text-muted)]",
-                        slot.is_available && selectedSlot?.slot_time === slot.slot_time &&
+                        slot.is_available && selectedSlot?.datetime === slot.datetime &&
                           "border-[var(--accent)] bg-[var(--accent)] text-white",
-                        slot.is_available && selectedSlot?.slot_time !== slot.slot_time &&
+                        slot.is_available && selectedSlot?.datetime !== slot.datetime &&
                           "border-[var(--border)] text-[var(--text-primary)] hover:border-[var(--accent)] hover:bg-[var(--accent-light)]"
                       )}
                     >
-                      {formatTime(slot.slot_time)}
+                      {formatTime(slot.datetime)}
                     </button>
                   ))}
                 </div>

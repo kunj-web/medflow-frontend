@@ -44,8 +44,8 @@ export default function DoctorsPage() {
       if (activeFilter === "active") params.is_active = true;
       if (activeFilter === "inactive") params.is_active = false;
 
-      const res = await api.get<PaginatedResponse<Doctor>>("/doctors", { params });
-      setDoctors(res.data.items);
+      const res = await api.get<PaginatedResponse<Doctor>>("/api/v1/doctors", { params });
+      setDoctors(res.data.data ?? []);
       setTotal(res.data.total);
     } catch (err) {
       setError(parseApiError(err));

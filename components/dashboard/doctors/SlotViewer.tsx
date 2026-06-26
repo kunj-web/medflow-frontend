@@ -167,7 +167,7 @@ export default function SlotViewer({ doctor, onClose }: SlotViewerProps) {
               <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
                 {slots.map((slot) => (
                   <div
-                    key={slot.slot_time}
+                    key={slot.datetime}
                     className="rounded-lg border px-3 py-2.5 flex flex-col gap-1.5 transition-colors"
                     style={{
                       borderColor: slot.is_available ? "var(--border)" : "var(--gray-200)",
@@ -175,7 +175,7 @@ export default function SlotViewer({ doctor, onClose }: SlotViewerProps) {
                     }}
                   >
                     <p className="font-mono text-xs font-medium text-[var(--text-primary)]">
-                      {formatSlotTime(slot.slot_time)}
+                      {formatSlotTime(slot.datetime)}
                     </p>
                     <Badge
                       variant={slot.is_available ? "success" : "neutral"}

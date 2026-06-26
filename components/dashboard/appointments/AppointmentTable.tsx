@@ -10,6 +10,8 @@ import Spinner from "@/components/ui/Spinner";
 
 const STATUS_BADGE: Record<AppointmentStatus, { variant: "success" | "warning" | "error" | "neutral" | "info"; label: string }> = {
   [AppointmentStatus.SCHEDULED]:  { variant: "info",    label: "Scheduled" },
+  [AppointmentStatus.CONFIRMED]:  { variant: "info",    label: "Confirmed" },
+  [AppointmentStatus.IN_PROGRESS]: { variant: "warning", label: "In progress" },
   [AppointmentStatus.COMPLETED]:  { variant: "success", label: "Completed" },
   [AppointmentStatus.CANCELLED]:  { variant: "error",   label: "Cancelled" },
   [AppointmentStatus.NO_SHOW]:    { variant: "warning", label: "No-show" },
@@ -36,6 +38,7 @@ export default function AppointmentTable({
   onPageChange,
   onCancel,
 }: AppointmentTableProps) {
+  const rows = appointments ?? [];
 
   if (loading) {
     return (
@@ -45,7 +48,7 @@ export default function AppointmentTable({
     );
   }
 
-  if (appointments.length === 0) {
+  if (rows.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center py-20 gap-3 text-center">
         <div className="w-10 h-10 rounded-full bg-[var(--gray-100)] flex items-center justify-center text-[var(--text-muted)]">
@@ -82,7 +85,7 @@ export default function AppointmentTable({
             </tr>
           </thead>
           <tbody>
-            {appointments.map((appt, i) => {
+            {rows.map((appt, i) => {
               const { variant, label } = STATUS_BADGE[appt.status];
               const canCancel = appt.status === AppointmentStatus.SCHEDULED;
 
@@ -91,7 +94,7 @@ export default function AppointmentTable({
                   key={appt.id}
                   className={cn(
                     "border-b border-[var(--border)] hover:bg-[var(--gray-50)] transition-colors",
-                    i === appointments.length - 1 && "border-b-0"
+                    i === rows.length - 1 && "border-b-0"
                   )}
                 >
                   {/* Token */}
@@ -137,7 +140,7 @@ export default function AppointmentTable({
                   {/* Type */}
                   <td className="px-4 py-3">
                     <span className="text-xs text-[var(--text-secondary)]">
-                      {appt.appointment_type === AppointmentType.IN_PERSON ? "In-person" : "Teleconsult"}
+                      {appt.type === AppointmentType.CONSULTATION ? "Consultation" : appt.type.replace("_", " ")}
                     </span>
                   </td>
 
