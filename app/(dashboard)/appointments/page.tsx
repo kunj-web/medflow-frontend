@@ -16,6 +16,7 @@ import AppointmentTable from "@/components/dashboard/appointments/AppointmentTab
 import BookModal from "@/components/dashboard/appointments/BookModal";
 import CancelDialog from "@/components/dashboard/appointments/CancelDialog";
 import { cn } from "@/lib/utils";
+import { useAuth } from "@/hooks/useAuth";
 
 const STATUS_TABS: { label: string; value: AppointmentStatus | "ALL" }[] = [
   { label: "All",       value: "ALL" },
@@ -28,6 +29,7 @@ const STATUS_TABS: { label: string; value: AppointmentStatus | "ALL" }[] = [
 const PAGE_SIZE = 10;
 
 export default function AppointmentsPage() {
+  const { isPatient } = useAuth();
   const [activeStatus, setActiveStatus] = useState<AppointmentStatus | "ALL">("ALL");
   const [dateFilter, setDateFilter] = useState("");
   const [page, setPage] = useState(1);
@@ -93,20 +95,22 @@ export default function AppointmentsPage() {
     <div>
       <PageHeader
         title="Appointments"
-        subtitle="Manage and schedule patient appointments"
+        subtitle={isPatient ? "View and book your appointments" : "Review scheduled patient appointments"}
         actions={
-          <Button
-            variant="primary"
-            size="sm"
-            onClick={() => setBookOpen(true)}
-            leftIcon={
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
-                <line x1="12" y1="5" x2="12" y2="19" /><line x1="5" y1="12" x2="19" y2="12" />
-              </svg>
-            }
-          >
-            Book appointment
-          </Button>
+          isPatient ? (
+            <Button
+              variant="primary"
+              size="sm"
+              onClick={() => setBookOpen(true)}
+              leftIcon={
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
+                  <line x1="12" y1="5" x2="12" y2="19" /><line x1="5" y1="12" x2="19" y2="12" />
+                </svg>
+              }
+            >
+              Book appointment
+            </Button>
+          ) : undefined
         }
       />
 
@@ -168,7 +172,7 @@ export default function AppointmentsPage() {
         />
       </Card>
 
-      {bookOpen && (
+      {bookOpen && isPatient && (
         <BookModal
           onClose={() => setBookOpen(false)}
           onSuccess={() => {
