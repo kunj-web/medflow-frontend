@@ -1,83 +1,60 @@
 import { PaginationParams } from "./common";
 
-// ─── Enums ────────────────────────────────────────────────────────────────────
-
 export enum InvoiceStatus {
-  DRAFT = "DRAFT",
-  ISSUED = "ISSUED",
-  PAID = "PAID",
-  PARTIALLY_PAID = "PARTIALLY_PAID",
-  CANCELLED = "CANCELLED",
+  DRAFT = "draft",
+  ISSUED = "issued",
+  PAID = "paid",
+  PARTIALLY_PAID = "partially_paid",
+  CANCELLED = "cancelled",
 }
 
 export enum PaymentMethod {
-  CASH = "CASH",
-  CARD = "CARD",
-  UPI = "UPI",
-  BANK_TRANSFER = "BANK_TRANSFER",
-  INSURANCE = "INSURANCE",
+  CASH = "cash",
+  CARD = "card",
+  UPI = "upi",
+  INSURANCE = "insurance",
 }
-
-// ─── Line Item (JSONB) ────────────────────────────────────────────────────────
 
 export interface LineItem {
   description: string;
   quantity: number;
   unit_price: number;
-  total: number; // quantity * unit_price
+  amount: number;
 }
-
-// ─── Invoice ──────────────────────────────────────────────────────────────────
 
 export interface Invoice {
   id: string;
-  hospital_id: string;
-  patient_id: string;
-  appointment_id?: string;
   invoice_number: string;
+  appointment_id: string;
+  patient_id: string;
   status: InvoiceStatus;
   line_items: LineItem[];
+  subtotal: number;
   discount_amount: number;
   total_amount: number;
+  amount_paid: number;
   balance_due: number;
-  payment_method?: PaymentMethod;
-  transaction_reference?: string;
-  notes?: string;
-  issued_at?: string;
+  payment_method: PaymentMethod | string | null;
+  transaction_reference?: string | null;
+  notes?: string | null;
+  issued_at?: string | null;
+  paid_at?: string | null;
   created_at: string;
-  deleted_at: string | null;
-  // relations
-  patient?: {
-    id: string;
-    first_name: string;
-    last_name: string;
-    phone: string;
-  };
 }
 
-// ─── Requests ─────────────────────────────────────────────────────────────────
-
 export interface InvoiceCreate {
-  patient_id: string;
-  appointment_id?: string;
-  line_items: Omit<LineItem, "total">[];
+  appointment_id: string;
+  line_items: LineItem[];
   discount_amount?: number;
   notes?: string;
 }
 
 export interface InvoicePay {
-  amount: number;
+  amount_paid: number;
   payment_method: PaymentMethod;
   transaction_reference?: string;
 }
 
-export interface InvoiceCancel {
-  reason?: string;
-}
-
-// ─── Query Params ─────────────────────────────────────────────────────────────
-
 export interface InvoiceListParams extends PaginationParams {
   status?: InvoiceStatus;
-  patient_id?: string;
 }
