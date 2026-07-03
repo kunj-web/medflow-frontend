@@ -4,19 +4,18 @@ import { Gender, BloodGroup, PaginationParams } from "./common";
 
 export interface Patient {
   id: string;
-  hospital_id: string;
   user_id: string;
   first_name: string;
   last_name: string;
-  full_name: string;
-  phone: string;
-  email: string;
-  date_of_birth?: string;   // "YYYY-MM-DD"
-  gender?: Gender;
-  blood_group?: BloodGroup;
-  existing_conditions?: string;
-  created_at: string;
-  deleted_at: string | null;
+  phone: string | null;
+  email: string | null;
+  date_of_birth?: string | null;
+  gender?: Gender | null;
+  blood_group?: BloodGroup | null;
+  allergies?: string | null;
+  existing_conditions?: string | null;
+  emergency_contact_name?: string | null;
+  emergency_contact_phone?: string | null;
 }
 
 // ─── Requests ─────────────────────────────────────────────────────────────────
