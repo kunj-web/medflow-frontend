@@ -24,8 +24,17 @@ const STEP_LABELS: Record<Step, string> = {
   3: "Slot",
 };
 
-function todayStr() {
-  return new Date().toISOString().split("T")[0];
+function toDateInputValue(date: Date) {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
+}
+
+function tomorrowStr() {
+  const date = new Date();
+  date.setDate(date.getDate() + 1);
+  return toDateInputValue(date);
 }
 
 export default function BookModal({ onSuccess, onClose }: BookModalProps) {
@@ -37,7 +46,7 @@ export default function BookModal({ onSuccess, onClose }: BookModalProps) {
   const [chiefComplaint, setChiefComplaint] = useState("");
   const [step1Error, setStep1Error] = useState("");
 
-  const [selectedDate, setSelectedDate] = useState(todayStr());
+  const [selectedDate, setSelectedDate] = useState(tomorrowStr());
   const [step2Error, setStep2Error] = useState("");
 
   const [slots, setSlots] = useState<Slot[]>([]);
@@ -111,8 +120,8 @@ export default function BookModal({ onSuccess, onClose }: BookModalProps) {
       setStep2Error("Select a date.");
       return;
     }
-    if (selectedDate < todayStr()) {
-      setStep2Error("Date must be today or in the future.");
+    if (selectedDate < tomorrowStr()) {
+      setStep2Error("Appointments must be booked at least one day in advance.");
       return;
     }
     setStep2Error("");
@@ -255,7 +264,7 @@ export default function BookModal({ onSuccess, onClose }: BookModalProps) {
                 label="Date"
                 type="date"
                 value={selectedDate}
-                min={todayStr()}
+                min={tomorrowStr()}
                 onChange={(e) => {
                   setSelectedDate(e.target.value);
                   if (step2Error) setStep2Error("");
