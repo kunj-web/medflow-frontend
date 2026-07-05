@@ -34,6 +34,7 @@ interface DayRow {
   enabled: boolean;
   start_time: string; // "HH:MM"
   end_time: string;   // "HH:MM"
+  slot_duration_minutes: number;
   error: string | null;
 }
 
@@ -43,6 +44,7 @@ const DEFAULT_ROW: DayRow = {
   enabled: false,
   start_time: "09:00",
   end_time: "17:00",
+  slot_duration_minutes: 10,
   error: null,
 };
 
@@ -59,6 +61,7 @@ function applyExisting(base: ScheduleState, schedules: DoctorSchedule[]): Schedu
       enabled: true,
       start_time: s.start_time.slice(0, 5), // "HH:MM:SS" → "HH:MM"
       end_time: s.end_time.slice(0, 5),
+      slot_duration_minutes: s.slot_duration_minutes,
       error: null,
     };
   }
@@ -80,7 +83,7 @@ export default function ScheduleModal({ doctor, onClose, onSaved }: ScheduleModa
       setFetchLoading(true);
       setFetchError(null);
       try {
-        const res = await api.get<DoctorSchedule[]>(`/doctors/${doctor.id}/schedules`);
+        const res = await api.get<DoctorSchedule[]>(`/api/v1/doctors/${doctor.id}/schedules`);
         setSchedule((prev) => applyExisting(prev, res.data));
       } catch (err) {
         setFetchError(parseApiError(err));
@@ -103,6 +106,13 @@ export default function ScheduleModal({ doctor, onClose, onSaved }: ScheduleModa
     setSchedule((prev) => ({
       ...prev,
       [day]: { ...prev[day], [field]: value, error: null },
+    }));
+  };
+
+  const setDuration = (day: DayOfWeek, value: number) => {
+    setSchedule((prev) => ({
+      ...prev,
+      [day]: { ...prev[day], slot_duration_minutes: value, error: null },
     }));
   };
 
@@ -134,9 +144,10 @@ export default function ScheduleModal({ doctor, onClose, onSaved }: ScheduleModa
           day_of_week: day,
           start_time: schedule[day].start_time,
           end_time: schedule[day].end_time,
+          slot_duration_minutes: schedule[day].slot_duration_minutes,
         }));
 
-      await api.post(`/doctors/${doctor.id}/schedules`, schedules);
+      await api.post(`/api/v1/doctors/${doctor.id}/schedules`, schedules);
       onSaved();
     } catch (err) {
       setApiError(parseApiError(err));
@@ -227,7 +238,7 @@ export default function ScheduleModal({ doctor, onClose, onSaved }: ScheduleModa
               {/* Column headers */}
               <div
                 className="grid items-center gap-3 px-1 mb-1"
-                style={{ gridTemplateColumns: "6rem 1fr 1fr" }}
+                style={{ gridTemplateColumns: "6rem 1fr 1fr 5rem" }}
               >
                 <span />
                 <span className="text-xs font-semibold text-[var(--text-muted)] uppercase tracking-wide">
@@ -235,6 +246,9 @@ export default function ScheduleModal({ doctor, onClose, onSaved }: ScheduleModa
                 </span>
                 <span className="text-xs font-semibold text-[var(--text-muted)] uppercase tracking-wide">
                   End
+                </span>
+                <span className="text-xs font-semibold text-[var(--text-muted)] uppercase tracking-wide">
+                  Slot
                 </span>
               </div>
 
@@ -245,7 +259,7 @@ export default function ScheduleModal({ doctor, onClose, onSaved }: ScheduleModa
                     <div
                       className="grid items-center gap-3 rounded-lg px-3 py-2.5 transition-colors"
                       style={{
-                        gridTemplateColumns: "6rem 1fr 1fr",
+                        gridTemplateColumns: "6rem 1fr 1fr 5rem",
                         background: row.enabled ? "var(--gray-50)" : "transparent",
                         border: row.enabled
                           ? "1px solid var(--border)"
@@ -300,6 +314,19 @@ export default function ScheduleModal({ doctor, onClose, onSaved }: ScheduleModa
                         className="h-8 w-full rounded-[var(--radius-md)] border px-2 text-sm font-mono bg-white text-[var(--text-primary)] transition-colors focus:outline-none focus:ring-2 focus:ring-[var(--accent)] focus:border-[var(--accent)] disabled:opacity-40 disabled:cursor-not-allowed"
                         style={{ borderColor: row.error ? "var(--error)" : "var(--border)" }}
                       />
+
+                      <select
+                        value={row.slot_duration_minutes}
+                        disabled={!row.enabled}
+                        onChange={(e) => setDuration(day, Number(e.target.value))}
+                        className="h-8 w-full rounded-[var(--radius-md)] border border-[var(--border)] px-2 text-sm font-mono bg-white text-[var(--text-primary)] transition-colors focus:outline-none focus:ring-2 focus:ring-[var(--accent)] focus:border-[var(--accent)] disabled:opacity-40 disabled:cursor-not-allowed"
+                      >
+                        {[5, 10, 15, 20, 30, 60].map((duration) => (
+                          <option key={duration} value={duration}>
+                            {duration}m
+                          </option>
+                        ))}
+                      </select>
                     </div>
 
                     {/* Row-level error */}

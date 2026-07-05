@@ -16,7 +16,7 @@ import type { PaginatedResponse } from "@/types/common";
 const PAGE_SIZE = 15;
 
 export default function DoctorsPage() {
-  const { isAdmin } = useAuth();
+  const { user, isAdmin, isDoctor } = useAuth();
 
   // ── list state ───────────────────────────────────────────────
   const [doctors, setDoctors] = useState<Doctor[]>([]);
@@ -39,7 +39,10 @@ export default function DoctorsPage() {
     setLoading(true);
     setError(null);
     try {
-      const params: DoctorListParams = { page, page_size: PAGE_SIZE };
+      const params: DoctorListParams = {
+        page,
+        page_size: isDoctor && !isAdmin ? 100 : PAGE_SIZE,
+      };
       if (search.trim()) params.search = search.trim();
       if (activeFilter === "active") params.is_active = true;
       if (activeFilter === "inactive") params.is_active = false;
@@ -52,7 +55,7 @@ export default function DoctorsPage() {
     } finally {
       setLoading(false);
     }
-  }, [page, search, activeFilter]);
+  }, [page, search, activeFilter, isAdmin, isDoctor]);
 
   useEffect(() => {
     fetchDoctors();
@@ -69,7 +72,11 @@ export default function DoctorsPage() {
     fetchDoctors();
   };
 
-  const totalPages = Math.ceil(total / PAGE_SIZE);
+  const visibleDoctors = isDoctor && !isAdmin
+    ? doctors.filter((doctor) => doctor.user_id === user?.user_id)
+    : doctors;
+  const visibleTotal = isDoctor && !isAdmin ? visibleDoctors.length : total;
+  const totalPages = isDoctor && !isAdmin ? 1 : Math.ceil(total / PAGE_SIZE);
 
   return (
     <div className="flex flex-col gap-6">
@@ -77,7 +84,9 @@ export default function DoctorsPage() {
         title="Doctors"
         subtitle={
           total > 0
-            ? `${total} doctor${total === 1 ? "" : "s"} registered`
+            ? isDoctor && !isAdmin
+              ? "Manage your schedule and slots"
+              : `${total} doctor${total === 1 ? "" : "s"} registered`
             : "Manage your medical staff"
         }
         actions={
@@ -103,8 +112,8 @@ export default function DoctorsPage() {
       )}
 
     <DoctorTable
-      doctors={doctors}
-      total={total}
+      doctors={visibleDoctors}
+      total={visibleTotal}
       loading={loading}
       totalPages={totalPages}
       currentPage={page}

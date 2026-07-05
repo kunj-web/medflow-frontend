@@ -23,10 +23,10 @@ export interface Doctor {
 export interface DoctorSchedule {
   id: string;
   doctor_id: string;
-  hospital_id: string;
   day_of_week: DayOfWeek;
   start_time: string; // "HH:MM"
   end_time: string;   // "HH:MM"
+  slot_duration_minutes: number;
 }
 
 export interface DoctorLeave {
@@ -73,6 +73,7 @@ export interface ScheduleUpsert {
   day_of_week: DayOfWeek;
   start_time: string;
   end_time: string;
+  slot_duration_minutes: number;
 }
 
 export interface LeaveCreate {
