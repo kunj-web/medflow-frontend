@@ -18,8 +18,9 @@ interface SlotViewerProps {
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
-function todayString(): string {
+function tomorrowString(): string {
   const d = new Date();
+  d.setDate(d.getDate() + 1);
   const yyyy = d.getFullYear();
   const mm = String(d.getMonth() + 1).padStart(2, "0");
   const dd = String(d.getDate()).padStart(2, "0");
@@ -37,7 +38,7 @@ function formatSlotTime(slotTime: string): string {
 // ── Component ─────────────────────────────────────────────────────────────────
 
 export default function SlotViewer({ doctor, onClose }: SlotViewerProps) {
-  const [date, setDate] = useState<string>(todayString());
+  const [date, setDate] = useState<string>(tomorrowString());
   const [slots, setSlots] = useState<Slot[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -53,7 +54,7 @@ export default function SlotViewer({ doctor, onClose }: SlotViewerProps) {
       setError(null);
       setSlots([]);
       try {
-        const res = await api.get<Slot[]>(`/doctors/${doctor.id}/slots`, {
+        const res = await api.get<Slot[]>(`/api/v1/doctors/${doctor.id}/slots`, {
           params: { date },
         });
         if (!cancelled) setSlots(res.data);
