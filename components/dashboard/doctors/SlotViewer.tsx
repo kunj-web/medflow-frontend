@@ -1,22 +1,18 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import Button from "@/components/ui/Button";
 import Badge from "@/components/ui/Badge";
 import Input from "@/components/ui/Input";
 import Spinner from "@/components/ui/Spinner";
 import { parseApiError } from "@/lib/auth";
 import api from "@/lib/api";
-import type { Doctor, Slot } from "@/types/doctor";
-
-// ── Props ─────────────────────────────────────────────────────────────────────
+import type { Doctor, DoctorLeave, Slot } from "@/types/doctor";
 
 interface SlotViewerProps {
   doctor: Doctor;
   onClose: () => void;
 }
-
-// ── Helpers ───────────────────────────────────────────────────────────────────
 
 function tomorrowString(): string {
   const d = new Date();
@@ -35,49 +31,98 @@ function formatSlotTime(slotTime: string): string {
   });
 }
 
-// ── Component ─────────────────────────────────────────────────────────────────
+function toTimeInput(slotTime: string): string {
+  return new Date(slotTime).toTimeString().slice(0, 5);
+}
 
 export default function SlotViewer({ doctor, onClose }: SlotViewerProps) {
   const [date, setDate] = useState<string>(tomorrowString());
   const [slots, setSlots] = useState<Slot[]>([]);
+  const [leaves, setLeaves] = useState<DoctorLeave[]>([]);
   const [loading, setLoading] = useState(false);
+  const [actionLoading, setActionLoading] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
-  // ── fetch slots whenever date changes ─────────────────────────
-  useEffect(() => {
+  const dayLeave = useMemo(
+    () => leaves.find((leave) => leave.leave_date === date) ?? null,
+    [date, leaves]
+  );
+
+  const load = useCallback(async () => {
     if (!date) return;
-
-    let cancelled = false;
-
-    const load = async () => {
-      setLoading(true);
-      setError(null);
-      setSlots([]);
-      try {
-        const res = await api.get<Slot[]>(`/api/v1/doctors/${doctor.id}/slots`, {
-          params: { date },
-        });
-        if (!cancelled) setSlots(res.data);
-      } catch (err) {
-        if (!cancelled) setError(parseApiError(err));
-      } finally {
-        if (!cancelled) setLoading(false);
-      }
-    };
-
-    load();
-    return () => { cancelled = true; };
+    setLoading(true);
+    setError(null);
+    setSlots([]);
+    try {
+      const [slotsRes, leavesRes] = await Promise.all([
+        api.get<Slot[]>(`/api/v1/doctors/${doctor.id}/slots`, { params: { date } }),
+        api.get<DoctorLeave[]>(`/api/v1/doctors/${doctor.id}/leaves`),
+      ]);
+      setSlots(slotsRes.data);
+      setLeaves(leavesRes.data);
+    } catch (err) {
+      setError(parseApiError(err));
+    } finally {
+      setLoading(false);
+    }
   }, [date, doctor.id]);
 
-  // ── backdrop close ────────────────────────────────────────────
+  useEffect(() => {
+    load();
+  }, [load]);
+
+  async function toggleDay() {
+    setActionLoading("day");
+    setError(null);
+    try {
+      if (dayLeave) {
+        await api.delete(`/api/v1/doctors/${doctor.id}/leave/${date}`);
+      } else {
+        await api.post(`/api/v1/doctors/${doctor.id}/leave`, {
+          leave_date: date,
+          reason: "Unavailable",
+        });
+      }
+      await load();
+    } catch (err) {
+      setError(parseApiError(err));
+    } finally {
+      setActionLoading(null);
+    }
+  }
+
+  async function toggleSlot(slot: Slot) {
+    setActionLoading(slot.datetime);
+    setError(null);
+    try {
+      if (slot.block_id) {
+        await api.delete(`/api/v1/doctors/${doctor.id}/slot-blocks/${slot.block_id}`);
+      } else {
+        const nextSlot = slots.find((item) => item.datetime > slot.datetime);
+        const fallbackEnd = new Date(new Date(slot.datetime).getTime() + 10 * 60 * 1000);
+        await api.post(`/api/v1/doctors/${doctor.id}/slot-blocks`, {
+          block_date: date,
+          start_time: toTimeInput(slot.datetime),
+          end_time: nextSlot ? toTimeInput(nextSlot.datetime) : fallbackEnd.toTimeString().slice(0, 5),
+          reason: "Unavailable",
+        });
+      }
+      await load();
+    } catch (err) {
+      setError(parseApiError(err));
+    } finally {
+      setActionLoading(null);
+    }
+  }
+
   const handleBackdrop = (e: React.MouseEvent<HTMLDivElement>) => {
     if (e.target === e.currentTarget) onClose();
   };
 
-  const available = slots.filter((s) => s.is_available).length;
-  const booked = slots.length - available;
+  const blocked = slots.filter((slot) => slot.block_id).length;
+  const available = slots.filter((slot) => slot.is_available).length;
+  const booked = slots.length - available - blocked;
 
-  // ── render ────────────────────────────────────────────────────
   return (
     <div
       className="fixed inset-0 z-50 flex items-center justify-center p-4"
@@ -85,15 +130,12 @@ export default function SlotViewer({ doctor, onClose }: SlotViewerProps) {
       onClick={handleBackdrop}
     >
       <div
-        className="w-full max-w-lg rounded-xl bg-white flex flex-col"
+        className="w-full max-w-2xl rounded-xl bg-white flex flex-col"
         style={{ boxShadow: "var(--shadow-lg)", maxHeight: "90vh" }}
       >
-        {/* Header */}
         <div className="flex items-center justify-between px-6 py-4 border-b border-[var(--border)] shrink-0">
           <div>
-            <h2 className="text-base font-semibold text-[var(--text-primary)]">
-              Slot Viewer
-            </h2>
+            <h2 className="text-base font-semibold text-[var(--text-primary)]">Slot Viewer</h2>
             <p className="text-xs text-[var(--text-muted)] mt-0.5">
               Dr. {doctor.first_name} {doctor.last_name}
             </p>
@@ -108,10 +150,7 @@ export default function SlotViewer({ doctor, onClose }: SlotViewerProps) {
           </button>
         </div>
 
-        {/* Body */}
         <div className="overflow-y-auto px-6 py-5 flex flex-col gap-4">
-
-          {/* Date picker */}
           <Input
             label="Date"
             type="date"
@@ -119,7 +158,26 @@ export default function SlotViewer({ doctor, onClose }: SlotViewerProps) {
             onChange={(e) => setDate(e.target.value)}
           />
 
-          {/* Error */}
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 rounded-lg border border-[var(--border)] bg-[var(--gray-50)] px-4 py-3">
+            <div>
+              <p className="text-sm font-medium text-[var(--text-primary)]">
+                {dayLeave ? "Day unavailable" : "Day available"}
+              </p>
+              <p className="text-xs text-[var(--text-muted)] mt-0.5">
+                {dayLeave ? "Patients cannot book any slot on this date." : "Block the whole date if the doctor is unavailable."}
+              </p>
+            </div>
+            <Button
+              variant={dayLeave ? "secondary" : "ghost"}
+              size="sm"
+              onClick={toggleDay}
+              loading={actionLoading === "day"}
+              disabled={loading}
+            >
+              {dayLeave ? "Make active" : "Block day"}
+            </Button>
+          </div>
+
           {error && (
             <div
               className="rounded-lg px-4 py-3 text-sm"
@@ -133,57 +191,64 @@ export default function SlotViewer({ doctor, onClose }: SlotViewerProps) {
             </div>
           )}
 
-          {/* Loading */}
           {loading && (
             <div className="flex items-center justify-center py-12 gap-2 text-sm text-[var(--text-muted)]">
-              <Spinner size="sm" /> Loading slots…
+              <Spinner size="sm" /> Loading slots...
             </div>
           )}
 
-          {/* Empty */}
           {!loading && !error && date && slots.length === 0 && (
             <div className="flex flex-col items-center justify-center py-12 gap-2 text-center">
-              <p className="text-sm font-medium text-[var(--text-primary)]">No slots found</p>
+              <p className="text-sm font-medium text-[var(--text-primary)]">
+                {dayLeave ? "This day is unavailable" : "No slots found"}
+              </p>
               <p className="text-xs text-[var(--text-muted)]">
-                The doctor has no schedule on this day.
+                {dayLeave ? "Make the day active to show generated slots." : "The doctor has no schedule on this day."}
               </p>
             </div>
           )}
 
-          {/* Slot grid */}
           {!loading && slots.length > 0 && (
             <div className="flex flex-col gap-3">
-              {/* Summary row */}
-              <div className="flex items-center gap-3">
+              <div className="flex items-center gap-3 flex-wrap">
                 <span className="text-xs text-[var(--text-muted)]">
                   {slots.length} slot{slots.length === 1 ? "" : "s"} total
                 </span>
                 <Badge variant="success" dot>{available} available</Badge>
-                {booked > 0 && (
-                  <Badge variant="neutral" dot>{booked} booked</Badge>
-                )}
+                {booked > 0 && <Badge variant="neutral" dot>{booked} booked</Badge>}
+                {blocked > 0 && <Badge variant="warning" dot>{blocked} blocked</Badge>}
               </div>
 
-              {/* Grid */}
               <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
                 {slots.map((slot) => (
                   <div
                     key={slot.datetime}
-                    className="rounded-lg border px-3 py-2.5 flex flex-col gap-1.5 transition-colors"
+                    className="rounded-lg border px-3 py-2.5 flex flex-col gap-2 transition-colors"
                     style={{
-                      borderColor: slot.is_available ? "var(--border)" : "var(--gray-200)",
-                      background: slot.is_available ? "white" : "var(--gray-50)",
+                      borderColor: slot.block_id ? "var(--warning)" : slot.is_available ? "var(--border)" : "var(--gray-200)",
+                      background: slot.block_id ? "var(--warning-bg)" : slot.is_available ? "white" : "var(--gray-50)",
                     }}
                   >
                     <p className="font-mono text-xs font-medium text-[var(--text-primary)]">
                       {formatSlotTime(slot.datetime)}
                     </p>
                     <Badge
-                      variant={slot.is_available ? "success" : "neutral"}
+                      variant={slot.block_id ? "warning" : slot.is_available ? "success" : "neutral"}
                       dot
                     >
-                      {slot.is_available ? "Available" : "Booked"}
+                      {slot.block_id ? "Blocked" : slot.is_available ? "Available" : "Booked"}
                     </Badge>
+                    {(slot.is_available || slot.block_id) && !dayLeave && (
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => toggleSlot(slot)}
+                        loading={actionLoading === slot.datetime}
+                        disabled={!!actionLoading}
+                      >
+                        {slot.block_id ? "Unblock" : "Block"}
+                      </Button>
+                    )}
                   </div>
                 ))}
               </div>
@@ -191,7 +256,6 @@ export default function SlotViewer({ doctor, onClose }: SlotViewerProps) {
           )}
         </div>
 
-        {/* Footer */}
         <div className="flex justify-end px-6 py-4 border-t border-[var(--border)] shrink-0">
           <Button variant="ghost" onClick={onClose}>
             Close
