@@ -32,15 +32,23 @@ export interface DoctorSchedule {
 export interface DoctorLeave {
   id: string;
   doctor_id: string;
-  hospital_id: string;
   leave_date: string; // "YYYY-MM-DD"
-  is_approved: boolean;
-  reason: string;
+  reason: string | null;
+}
+
+export interface DoctorSlotBlock {
+  id: string;
+  block_date: string;
+  start_time: string;
+  end_time: string;
+  reason: string | null;
 }
 
 export interface Slot {
   datetime: string; // naive ISO datetime string
   is_available: boolean;
+  block_id?: string | null;
+  block_reason?: string | null;
 }
 
 // ─── Requests ─────────────────────────────────────────────────────────────────
