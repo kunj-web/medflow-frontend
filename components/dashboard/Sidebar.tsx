@@ -37,9 +37,20 @@ const NAV: NavItem[] = [
     ),
   },
   {
+    label: "My Schedule",
+    href: "/my-schedule",
+    roles: [UserRole.DOCTOR],
+    icon: (
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <rect x="3" y="4" width="18" height="18" rx="2"/>
+        <path d="M16 2v4M8 2v4M3 10h18M8 14h4M8 18h8"/>
+      </svg>
+    ),
+  },
+  {
     label: "Doctors",
     href: "/doctors",
-    roles: [UserRole.ADMIN, UserRole.DOCTOR],
+    roles: [UserRole.ADMIN],
     icon: (
       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
         <path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/>
@@ -61,7 +72,7 @@ const NAV: NavItem[] = [
   {
     label: "Patients",
     href: "/patients",
-    roles: [UserRole.ADMIN, UserRole.DOCTOR],
+    roles: [UserRole.ADMIN],
     icon: (
       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
         <path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/>

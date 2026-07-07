@@ -1,23 +1,33 @@
 import { Gender, DayOfWeek, PaginationParams } from "./common";
+import type { WorkType } from "./auth";
 
 // ─── Doctor ───────────────────────────────────────────────────────────────────
 
 export interface Doctor {
   id: string;
-  hospital_id: string;
+  hospital_id: string | null;
   user_id: string;
   first_name: string;
   last_name: string;
-  full_name: string; // computed on backend
+  full_name?: string;
   gender: Gender;
-  phone: string;
-  email: string;
+  phone: string | null;
+  email: string | null;
   specialization: string;
+  qualification?: string | null;
   registration_number: string;
   experience_years: number;
+  consultation_fee: number;
   is_active: boolean;
-  created_at: string;
-  deleted_at: string | null;
+  work_type: WorkType;
+  clinic_name: string | null;
+  clinic_city: string | null;
+  clinic_address: string | null;
+  pending_hospital_name: string | null;
+  pending_hospital_city: string | null;
+  pending_hospital_state: string | null;
+  created_at?: string;
+  deleted_at?: string | null;
 }
 
 export interface DoctorSchedule {
