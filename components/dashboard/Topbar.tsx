@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/hooks/useAuth";
 import { logout } from "@/lib/auth";
@@ -20,7 +21,12 @@ export default function Topbar({ title }: TopbarProps) {
     router.push("/login");
   }
 
-  const initials = getInitials(user?.first_name ?? "U", user?.last_name);
+  const displayName = [user?.first_name, user?.last_name]
+    .filter(Boolean)
+    .join(" ")
+    .trim();
+  const profileName = displayName || user?.email || "-";
+  const initials = getInitials(user?.first_name ?? profileName, user?.last_name);
   const roleLabel = user?.role?.replace("_", " ") ?? "-";
 
   return (
@@ -44,7 +50,7 @@ export default function Topbar({ title }: TopbarProps) {
           </div>
           <div className="hidden sm:block text-left">
             <p className="text-xs font-medium text-[var(--text-primary)] leading-tight">
-              {user?.first_name ?? "User"} {user?.last_name ?? ""}
+              {profileName}
             </p>
             <p className="text-xs text-[var(--text-muted)] capitalize">
               {roleLabel}
@@ -79,6 +85,17 @@ export default function Topbar({ title }: TopbarProps) {
               </div>
 
               <div className="py-1">
+                <Link
+                  href="/profile"
+                  onClick={() => setDropdownOpen(false)}
+                  className="w-full text-left flex items-center gap-2.5 px-3 py-2 text-sm text-[var(--text-secondary)] hover:bg-[var(--gray-100)] hover:text-[var(--text-primary)] transition-colors"
+                >
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+                    <path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/>
+                    <circle cx="12" cy="7" r="4"/>
+                  </svg>
+                  Profile
+                </Link>
                 <button
                   onClick={handleLogout}
                   className="w-full text-left flex items-center gap-2.5 px-3 py-2 text-sm text-[var(--error)] hover:bg-[var(--error-bg)] transition-colors"

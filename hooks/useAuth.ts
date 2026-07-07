@@ -19,7 +19,6 @@ export function useAuth() {
           setUser(stored);
           setLoaded(true);
         }
-        return;
       }
 
       if (!isAuthenticated()) {

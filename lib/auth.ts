@@ -30,6 +30,9 @@ export async function login(credentials: LoginRequest): Promise<UserProfile> {
 export function logout(): void {
   tokenStore.clear();
   cookieStore.clear();
+  if (typeof window !== "undefined") {
+    localStorage.removeItem("user");
+  }
 }
 
 export async function getMe(): Promise<UserProfile> {

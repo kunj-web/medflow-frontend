@@ -1,12 +1,20 @@
 "use client";
 
 import Link from "next/link";
+import { useCallback, useEffect, useMemo, useState } from "react";
+import api from "@/lib/api";
+import { parseApiError } from "@/lib/auth";
 import { useAuth } from "@/hooks/useAuth";
 import StatCard from "@/components/dashboard/StatCard";
 import PageHeader from "@/components/dashboard/PageHeader";
+import BookModal from "@/components/dashboard/appointments/BookModal";
+import Badge from "@/components/ui/Badge";
+import Button from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
-import { getGreeting } from "@/lib/utils";
-import { UserRole } from "@/types/common";
+import Spinner from "@/components/ui/Spinner";
+import { formatDateTime, getGreeting } from "@/lib/utils";
+import { Appointment, AppointmentStatus } from "@/types/appointment";
+import { PaginatedResponse, UserRole } from "@/types/common";
 
 // Quick action tiles
 const QUICK_ACTIONS = [
@@ -105,6 +113,188 @@ const STATS = [
   },
 ];
 
+const STATUS_BADGE: Record<AppointmentStatus, { variant: "success" | "warning" | "error" | "neutral" | "info"; label: string }> = {
+  [AppointmentStatus.SCHEDULED]: { variant: "info", label: "Scheduled" },
+  [AppointmentStatus.CONFIRMED]: { variant: "info", label: "Confirmed" },
+  [AppointmentStatus.IN_PROGRESS]: { variant: "warning", label: "In progress" },
+  [AppointmentStatus.COMPLETED]: { variant: "success", label: "Completed" },
+  [AppointmentStatus.CANCELLED]: { variant: "error", label: "Cancelled" },
+  [AppointmentStatus.NO_SHOW]: { variant: "warning", label: "No-show" },
+};
+
+function PatientDashboard() {
+  const { user } = useAuth();
+  const [appointments, setAppointments] = useState<Appointment[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [fetchError, setFetchError] = useState("");
+  const [bookOpen, setBookOpen] = useState(false);
+
+  const fetchAppointments = useCallback(async () => {
+    setLoading(true);
+    setFetchError("");
+    try {
+      const { data } = await api.get<PaginatedResponse<Appointment>>(
+        "/api/v1/appointments/",
+        {
+          params: {
+            page: 1,
+            page_size: 20,
+            status: AppointmentStatus.SCHEDULED,
+          },
+        }
+      );
+      setAppointments(data.data ?? []);
+    } catch (err) {
+      setFetchError(parseApiError(err));
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchAppointments();
+  }, [fetchAppointments]);
+
+  const nextAppointment = useMemo(() => {
+    const now = new Date();
+
+    return appointments
+      .filter((appointment) => new Date(appointment.slot_time) >= now)
+      .sort(
+        (a, b) =>
+          new Date(a.slot_time).getTime() - new Date(b.slot_time).getTime()
+      )[0] ?? null;
+  }, [appointments]);
+
+  const statusMeta = nextAppointment
+    ? STATUS_BADGE[nextAppointment.status]
+    : null;
+  const greeting = getGreeting();
+  const firstName = user?.first_name ?? "there";
+
+  return (
+    <div>
+      <PageHeader
+        title={`${greeting}, ${firstName}`}
+        subtitle="Your dashboard"
+      />
+
+      <div className="grid grid-cols-1 xl:grid-cols-[minmax(0,1fr)_320px] gap-4">
+        <Card padding="lg" className="min-h-[220px]">
+          <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
+            <div>
+              <h2 className="text-sm font-semibold text-[var(--text-primary)]">
+                Next appointment
+              </h2>
+              <p className="text-xs text-[var(--text-muted)] mt-1">
+                Your nearest scheduled visit
+              </p>
+            </div>
+            <Button
+              variant="primary"
+              size="sm"
+              onClick={() => setBookOpen(true)}
+              leftIcon={
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
+                  <line x1="12" y1="5" x2="12" y2="19" /><line x1="5" y1="12" x2="19" y2="12" />
+                </svg>
+              }
+            >
+              Book appointment
+            </Button>
+          </div>
+
+          <div className="mt-8">
+            {loading ? (
+              <div className="flex items-center gap-2 text-sm text-[var(--text-muted)]">
+                <Spinner size="sm" /> Loading next appointment...
+              </div>
+            ) : fetchError ? (
+              <p className="text-sm text-[var(--error)]">{fetchError}</p>
+            ) : nextAppointment ? (
+              <div className="grid grid-cols-1 md:grid-cols-[minmax(0,1fr)_auto] gap-5 items-end">
+                <div>
+                  <div className="flex flex-wrap items-center gap-2">
+                    <p className="text-xl font-semibold text-[var(--text-primary)]">
+                      {nextAppointment.doctor
+                        ? `Dr. ${nextAppointment.doctor.first_name} ${nextAppointment.doctor.last_name}`
+                        : "Doctor appointment"}
+                    </p>
+                    {statusMeta && (
+                      <Badge variant={statusMeta.variant}>{statusMeta.label}</Badge>
+                    )}
+                  </div>
+                  <p className="text-sm text-[var(--text-secondary)] mt-1">
+                    {nextAppointment.doctor?.specialization ?? "Doctor"}
+                  </p>
+                  <p className="text-sm font-medium text-[var(--text-primary)] mt-5">
+                    {formatDateTime(nextAppointment.slot_time)}
+                  </p>
+                  <p className="text-xs text-[var(--text-muted)] mt-1 capitalize">
+                    {nextAppointment.type.replace("_", " ")}
+                    {nextAppointment.token_number
+                      ? ` - Token #${nextAppointment.token_number}`
+                      : ""}
+                  </p>
+                </div>
+
+                <Link
+                  href="/appointments"
+                  className="text-sm font-medium text-[var(--accent)] hover:text-[var(--accent-hover)]"
+                >
+                  View appointments
+                </Link>
+              </div>
+            ) : (
+              <div className="flex flex-col gap-3">
+                <p className="text-sm font-medium text-[var(--text-primary)]">
+                  No upcoming appointment
+                </p>
+                <p className="text-sm text-[var(--text-muted)] max-w-lg">
+                  Book a visit with an available doctor when you are ready.
+                </p>
+              </div>
+            )}
+          </div>
+        </Card>
+
+        <Card padding="lg" className="flex flex-col justify-between gap-6 min-h-[220px]">
+          <div>
+            <h2 className="text-sm font-semibold text-[var(--text-primary)]">
+              Quick book
+            </h2>
+            <p className="text-xs text-[var(--text-muted)] mt-1">
+              Open the booking flow and choose doctor, date, and slot.
+            </p>
+          </div>
+          <Button
+            variant="primary"
+            onClick={() => setBookOpen(true)}
+            className="w-full"
+            leftIcon={
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
+                <line x1="12" y1="5" x2="12" y2="19" /><line x1="5" y1="12" x2="19" y2="12" />
+              </svg>
+            }
+          >
+            Book appointment
+          </Button>
+        </Card>
+      </div>
+
+      {bookOpen && (
+        <BookModal
+          onClose={() => setBookOpen(false)}
+          onSuccess={() => {
+            setBookOpen(false);
+            fetchAppointments();
+          }}
+        />
+      )}
+    </div>
+  );
+}
+
 export default function DashboardPage() {
   const { user } = useAuth();
 
@@ -115,6 +305,10 @@ export default function DashboardPage() {
   const visibleActions = QUICK_ACTIONS.filter(
     (a) => !user?.role || a.roles.includes(user.role as UserRole)
   );
+
+  if (user?.role === UserRole.PATIENT) {
+    return <PatientDashboard />;
+  }
 
   return (
     <div>
