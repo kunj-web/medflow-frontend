@@ -17,6 +17,7 @@ const ROUTE_RULES: { prefix: string; roles: UserRole[] }[] = [
   { prefix: "/patients", roles: [UserRole.ADMIN] },
   { prefix: "/appointments", roles: [UserRole.ADMIN, UserRole.DOCTOR, UserRole.PATIENT] },
   { prefix: "/dashboard", roles: [UserRole.ADMIN, UserRole.DOCTOR, UserRole.PATIENT] },
+  { prefix: "/profile", roles: [UserRole.ADMIN, UserRole.DOCTOR, UserRole.PATIENT] },
 ];
 
 function allowedRolesFor(pathname: string): UserRole[] {

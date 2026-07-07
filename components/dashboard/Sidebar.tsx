@@ -99,6 +99,11 @@ const NAV: NavItem[] = [
 export default function Sidebar() {
   const pathname = usePathname();
   const { user, loaded } = useAuth();
+  const displayName = [user?.first_name, user?.last_name]
+    .filter(Boolean)
+    .join(" ")
+    .trim();
+  const profileName = displayName || user?.email || "-";
 
   const visibleNav =
     loaded && user
@@ -147,11 +152,11 @@ export default function Sidebar() {
       <div className="px-3 py-3 border-t border-[var(--border)] shrink-0">
         <div className="flex items-center gap-2.5 px-2 py-2 rounded-[var(--radius-md)] bg-[var(--gray-50)]">
           <div className="w-7 h-7 rounded-full bg-[var(--accent-light)] flex items-center justify-center text-xs font-semibold text-[var(--accent)] shrink-0">
-            {user?.first_name?.charAt(0)?.toUpperCase() ?? "U"}
+            {profileName.charAt(0).toUpperCase()}
           </div>
           <div className="min-w-0">
             <p className="text-xs font-medium text-[var(--text-primary)] truncate">
-              {user?.first_name ?? "User"}
+              {profileName}
             </p>
             <p className="text-xs text-[var(--text-muted)] truncate capitalize">
               {user?.role?.toLowerCase() ?? "—"}
