@@ -127,10 +127,13 @@ const STATUS_BADGE: Record<AppointmentStatus, { variant: "success" | "warning" |
 function PatientDashboard() {
   const { user } = useAuth();
   const [appointments, setAppointments] = useState<Appointment[]>([]);
+  const [recentAppointments, setRecentAppointments] = useState<Appointment[]>([]);
   const [patient, setPatient] = useState<Patient | null>(null);
   const [loading, setLoading] = useState(true);
+  const [recentLoading, setRecentLoading] = useState(true);
   const [patientLoading, setPatientLoading] = useState(true);
   const [fetchError, setFetchError] = useState("");
+  const [recentError, setRecentError] = useState("");
   const [patientError, setPatientError] = useState("");
   const [bookOpen, setBookOpen] = useState(false);
 
@@ -159,6 +162,27 @@ function PatientDashboard() {
   useEffect(() => {
     fetchAppointments();
   }, [fetchAppointments]);
+
+  const fetchRecentAppointments = useCallback(async () => {
+    setRecentLoading(true);
+    setRecentError("");
+    try {
+      const { data } = await api.get<PaginatedResponse<Appointment>>(
+        "/api/v1/appointments/",
+        { params: { page: 1, page_size: 5 } }
+      );
+      setRecentAppointments(data.data ?? []);
+    } catch (err) {
+      setRecentAppointments([]);
+      setRecentError(parseApiError(err));
+    } finally {
+      setRecentLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchRecentAppointments();
+  }, [fetchRecentAppointments]);
 
   const fetchPatient = useCallback(async () => {
     setPatientLoading(true);
@@ -313,12 +337,90 @@ function PatientDashboard() {
         />
       </div>
 
+      <div className="mt-4">
+        <Card padding="lg">
+          <div className="flex items-start justify-between gap-4 mb-5">
+            <div>
+              <h2 className="text-sm font-semibold text-[var(--text-primary)]">
+                Recent appointments
+              </h2>
+              <p className="text-xs text-[var(--text-muted)] mt-1">
+                Latest activity from your appointments
+              </p>
+            </div>
+            <Link
+              href="/appointments"
+              className="text-sm font-medium text-[var(--accent)] hover:text-[var(--accent-hover)]"
+            >
+              View all
+            </Link>
+          </div>
+
+          {recentLoading ? (
+            <div className="flex items-center gap-2 py-8 text-sm text-[var(--text-muted)]">
+              <Spinner size="sm" /> Loading recent appointments...
+            </div>
+          ) : recentError ? (
+            <p className="py-6 text-sm text-[var(--error)]">{recentError}</p>
+          ) : recentAppointments.length === 0 ? (
+            <div className="py-8">
+              <p className="text-sm font-medium text-[var(--text-primary)]">
+                No appointments yet
+              </p>
+              <p className="text-sm text-[var(--text-muted)] mt-1">
+                Book your first appointment when you are ready.
+              </p>
+            </div>
+          ) : (
+            <div className="divide-y divide-[var(--border)]">
+              {recentAppointments.map((appointment) => {
+                const status = STATUS_BADGE[appointment.status];
+                return (
+                  <div
+                    key={appointment.id}
+                    className="py-4 first:pt-0 last:pb-0 flex flex-col md:flex-row md:items-center md:justify-between gap-3"
+                  >
+                    <div className="min-w-0">
+                      <div className="flex flex-wrap items-center gap-2">
+                        <p className="text-sm font-semibold text-[var(--text-primary)] truncate">
+                          {appointment.doctor
+                            ? `Dr. ${appointment.doctor.first_name} ${appointment.doctor.last_name}`
+                            : "Doctor appointment"}
+                        </p>
+                        <Badge variant={status.variant}>{status.label}</Badge>
+                      </div>
+                      <p className="text-xs text-[var(--text-muted)] mt-1">
+                        {appointment.doctor?.specialization ?? "Doctor"} -{" "}
+                        <span className="capitalize">
+                          {appointment.type.replace("_", " ")}
+                        </span>
+                      </p>
+                    </div>
+                    <div className="md:text-right shrink-0">
+                      <p className="text-sm font-medium text-[var(--text-primary)]">
+                        {formatDateTime(appointment.slot_time)}
+                      </p>
+                      {appointment.token_number && (
+                        <p className="text-xs text-[var(--text-muted)] mt-1">
+                          Token #{appointment.token_number}
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </Card>
+      </div>
+
       {bookOpen && (
         <BookModal
           onClose={() => setBookOpen(false)}
           onSuccess={() => {
             setBookOpen(false);
             fetchAppointments();
+            fetchRecentAppointments();
           }}
         />
       )}
