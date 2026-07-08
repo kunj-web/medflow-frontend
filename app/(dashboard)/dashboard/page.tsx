@@ -8,6 +8,7 @@ import { useAuth } from "@/hooks/useAuth";
 import StatCard from "@/components/dashboard/StatCard";
 import PageHeader from "@/components/dashboard/PageHeader";
 import BookModal from "@/components/dashboard/appointments/BookModal";
+import PatientSnapshotCard from "@/components/dashboard/patient/PatientSnapshotCard";
 import Badge from "@/components/ui/Badge";
 import Button from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
@@ -15,6 +16,7 @@ import Spinner from "@/components/ui/Spinner";
 import { formatDateTime, getGreeting } from "@/lib/utils";
 import { Appointment, AppointmentStatus } from "@/types/appointment";
 import { PaginatedResponse, UserRole } from "@/types/common";
+import { Patient } from "@/types/patient";
 
 // Quick action tiles
 const QUICK_ACTIONS = [
@@ -125,8 +127,11 @@ const STATUS_BADGE: Record<AppointmentStatus, { variant: "success" | "warning" |
 function PatientDashboard() {
   const { user } = useAuth();
   const [appointments, setAppointments] = useState<Appointment[]>([]);
+  const [patient, setPatient] = useState<Patient | null>(null);
   const [loading, setLoading] = useState(true);
+  const [patientLoading, setPatientLoading] = useState(true);
   const [fetchError, setFetchError] = useState("");
+  const [patientError, setPatientError] = useState("");
   const [bookOpen, setBookOpen] = useState(false);
 
   const fetchAppointments = useCallback(async () => {
@@ -154,6 +159,24 @@ function PatientDashboard() {
   useEffect(() => {
     fetchAppointments();
   }, [fetchAppointments]);
+
+  const fetchPatient = useCallback(async () => {
+    setPatientLoading(true);
+    setPatientError("");
+    try {
+      const { data } = await api.get<Patient>("/api/v1/patients/me");
+      setPatient(data);
+    } catch (err) {
+      setPatient(null);
+      setPatientError(parseApiError(err));
+    } finally {
+      setPatientLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchPatient();
+  }, [fetchPatient]);
 
   const nextAppointment = useMemo(() => {
     const now = new Date();
@@ -280,6 +303,14 @@ function PatientDashboard() {
             Book appointment
           </Button>
         </Card>
+      </div>
+
+      <div className="mt-4">
+        <PatientSnapshotCard
+          patient={patient}
+          loading={patientLoading}
+          error={patientError}
+        />
       </div>
 
       {bookOpen && (
