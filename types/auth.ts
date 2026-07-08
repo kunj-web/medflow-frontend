@@ -55,6 +55,7 @@ export interface UserProfile {
   status: AccountStatus;
   is_super_admin: boolean;
   email?: string;
+  phone?: string;
   first_name?: string;
   last_name?: string;
   hospital_id?: string | null;
