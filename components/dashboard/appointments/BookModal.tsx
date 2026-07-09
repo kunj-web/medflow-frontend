@@ -260,6 +260,9 @@ export default function BookModal({ onSuccess, onClose }: BookModalProps) {
                   Dr. {selectedDoctor?.first_name} {selectedDoctor?.last_name}
                 </span>.
               </p>
+              <p className="border-l-2 border-[var(--accent)] bg-[var(--accent-light)] px-3 py-2 text-xs text-[var(--text-secondary)]">
+                You can book from tomorrow onward. Same-day appointments are not available.
+              </p>
               <Input
                 label="Date"
                 type="date"

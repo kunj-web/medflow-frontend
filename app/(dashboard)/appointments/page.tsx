@@ -114,6 +114,18 @@ export default function AppointmentsPage() {
         }
       />
 
+      {isPatient && (
+        <div className="mb-4 border border-[var(--border)] bg-[var(--gray-50)] px-4 py-3">
+          <p className="text-sm font-medium text-[var(--text-primary)]">
+            Appointment booking and cancellation
+          </p>
+          <ul className="mt-1.5 space-y-1 text-xs text-[var(--text-secondary)]">
+            <li>You can book appointments starting from tomorrow. Same-day booking is not available.</li>
+            <li>Appointments can be cancelled up to one day before the appointment, but not on the appointment day.</li>
+          </ul>
+        </div>
+      )}
+
       <Card padding="none">
         <div className="flex flex-col sm:flex-row sm:items-center gap-3 px-5 py-3 border-b border-[var(--border)]">
           <div className="flex items-center gap-1 flex-wrap">
@@ -165,6 +177,7 @@ export default function AppointmentsPage() {
         <AppointmentTable
           appointments={appointments}
           loading={loading}
+          isPatient={isPatient}
           totalPages={totalPages}
           currentPage={page}
           onPageChange={setPage}
