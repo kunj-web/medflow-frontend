@@ -22,6 +22,7 @@ const STATUS_BADGE: Record<AppointmentStatus, { variant: "success" | "warning" |
 interface AppointmentTableProps {
   appointments: Appointment[];
   loading: boolean;
+  isPatient: boolean;
   totalPages: number;
   currentPage: number;
   onPageChange: (page: number) => void;
@@ -33,12 +34,19 @@ interface AppointmentTableProps {
 export default function AppointmentTable({
   appointments,
   loading,
+  isPatient,
   totalPages,
   currentPage,
   onPageChange,
   onCancel,
 }: AppointmentTableProps) {
   const rows = appointments ?? [];
+  const today = new Date();
+  const todayStart = new Date(
+    today.getFullYear(),
+    today.getMonth(),
+    today.getDate()
+  );
 
   if (loading) {
     return (
@@ -88,6 +96,9 @@ export default function AppointmentTable({
             {rows.map((appt, i) => {
               const { variant, label } = STATUS_BADGE[appt.status];
               const canCancel = appt.status === AppointmentStatus.SCHEDULED;
+              const appointmentDate = new Date(appt.slot_time);
+              const patientCancellationClosed =
+                isPatient && appointmentDate < new Date(todayStart.getTime() + 86_400_000);
 
               return (
                 <tr
@@ -151,7 +162,7 @@ export default function AppointmentTable({
 
                   {/* Actions */}
                   <td className="px-4 py-3 pr-5">
-                    {canCancel && (
+                    {canCancel && !patientCancellationClosed && (
                       <Button
                         variant="ghost"
                         size="sm"
@@ -160,6 +171,14 @@ export default function AppointmentTable({
                       >
                         Cancel
                       </Button>
+                    )}
+                    {canCancel && patientCancellationClosed && (
+                      <span
+                        className="text-xs text-[var(--text-muted)] whitespace-nowrap"
+                        title="Appointments cannot be cancelled on the appointment day."
+                      >
+                        Cancellation closed
+                      </span>
                     )}
                   </td>
                 </tr>

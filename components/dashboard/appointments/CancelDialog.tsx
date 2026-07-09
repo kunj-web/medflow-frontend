@@ -98,6 +98,10 @@ export default function CancelDialog({
             </div>
           </div>
 
+          <p className="border-l-2 border-[var(--error)] bg-[var(--error-bg)] px-3 py-2 text-xs text-[var(--text-secondary)]">
+            Cancellation is available only until the day before the appointment. Same-day cancellation is not allowed.
+          </p>
+
           {/* Reason */}
           <div className="flex flex-col gap-1.5">
             <label className="text-sm font-medium text-[var(--text-primary)]">
