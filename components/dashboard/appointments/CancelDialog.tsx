@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { Appointment } from "@/types/appointment";
+import { parseApiError } from "@/lib/auth";
 import { formatDateTime } from "@/lib/utils";
 import Button from "@/components/ui/Button";
 
@@ -29,6 +30,8 @@ export default function CancelDialog({
     setLoading(true);
     try {
       await onConfirm(reason.trim());
+    } catch (err) {
+      setError(parseApiError(err));
     } finally {
       setLoading(false);
     }
