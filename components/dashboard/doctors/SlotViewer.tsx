@@ -36,6 +36,7 @@ function toTimeInput(slotTime: string): string {
 }
 
 export default function SlotViewer({ doctor, onClose }: SlotViewerProps) {
+  const minimumDate = useMemo(() => tomorrowString(), []);
   const [date, setDate] = useState<string>(tomorrowString());
   const [slots, setSlots] = useState<Slot[]>([]);
   const [leaves, setLeaves] = useState<DoctorLeave[]>([]);
@@ -50,6 +51,11 @@ export default function SlotViewer({ doctor, onClose }: SlotViewerProps) {
 
   const load = useCallback(async () => {
     if (!date) return;
+    if (date < minimumDate) {
+      setSlots([]);
+      setError("Slot management is available from tomorrow onward.");
+      return;
+    }
     setLoading(true);
     setError(null);
     setSlots([]);
@@ -65,13 +71,14 @@ export default function SlotViewer({ doctor, onClose }: SlotViewerProps) {
     } finally {
       setLoading(false);
     }
-  }, [date, doctor.id]);
+  }, [date, doctor.id, minimumDate]);
 
   useEffect(() => {
     load();
   }, [load]);
 
   async function toggleDay() {
+    if (date < minimumDate) return;
     setActionLoading("day");
     setError(null);
     try {
@@ -92,6 +99,7 @@ export default function SlotViewer({ doctor, onClose }: SlotViewerProps) {
   }
 
   async function toggleSlot(slot: Slot) {
+    if (date < minimumDate) return;
     setActionLoading(slot.datetime);
     setError(null);
     try {
@@ -122,6 +130,7 @@ export default function SlotViewer({ doctor, onClose }: SlotViewerProps) {
   const blocked = slots.filter((slot) => slot.block_id).length;
   const available = slots.filter((slot) => slot.is_available).length;
   const booked = slots.length - available - blocked;
+  const dateIsBeforeMinimum = !!date && date < minimumDate;
 
   return (
     <div
@@ -154,8 +163,11 @@ export default function SlotViewer({ doctor, onClose }: SlotViewerProps) {
           <Input
             label="Date"
             type="date"
+            min={minimumDate}
             value={date}
             onChange={(e) => setDate(e.target.value)}
+            error={dateIsBeforeMinimum ? "Choose tomorrow or a later date." : undefined}
+            helper="Doctors can manage slots from tomorrow onward."
           />
 
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 rounded-lg border border-[var(--border)] bg-[var(--gray-50)] px-4 py-3">
@@ -172,7 +184,7 @@ export default function SlotViewer({ doctor, onClose }: SlotViewerProps) {
               size="sm"
               onClick={toggleDay}
               loading={actionLoading === "day"}
-              disabled={loading}
+              disabled={loading || dateIsBeforeMinimum}
             >
               {dayLeave ? "Make active" : "Block day"}
             </Button>
@@ -218,6 +230,11 @@ export default function SlotViewer({ doctor, onClose }: SlotViewerProps) {
                 {booked > 0 && <Badge variant="neutral" dot>{booked} booked</Badge>}
                 {blocked > 0 && <Badge variant="warning" dot>{blocked} blocked</Badge>}
               </div>
+              {booked > 0 && (
+                <p className="text-xs text-[var(--text-muted)]">
+                  Booked slots cannot be blocked from this screen.
+                </p>
+              )}
 
               <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
                 {slots.map((slot) => (
@@ -248,6 +265,11 @@ export default function SlotViewer({ doctor, onClose }: SlotViewerProps) {
                       >
                         {slot.block_id ? "Unblock" : "Block"}
                       </Button>
+                    )}
+                    {!slot.is_available && !slot.block_id && (
+                      <p className="text-xs text-[var(--text-muted)]">
+                        Cannot block booked slot
+                      </p>
                     )}
                   </div>
                 ))}
