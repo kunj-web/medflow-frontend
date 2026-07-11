@@ -1,5 +1,6 @@
 "use client";
 
+import { Fragment } from "react";
 import { Appointment, AppointmentStatus, AppointmentType } from "@/types/appointment";
 import { formatDateTime, cn } from "@/lib/utils";
 import Badge from "@/components/ui/Badge";
@@ -101,11 +102,11 @@ export default function AppointmentTable({
                 isPatient && appointmentDate < new Date(todayStart.getTime() + 86_400_000);
 
               return (
+                <Fragment key={appt.id}>
                 <tr
-                  key={appt.id}
                   className={cn(
                     "border-b border-[var(--border)] hover:bg-[var(--gray-50)] transition-colors",
-                    i === rows.length - 1 && "border-b-0"
+                    i === rows.length - 1 && !appt.cancellation_reason && "border-b-0"
                   )}
                 >
                   {/* Token */}
@@ -182,6 +183,26 @@ export default function AppointmentTable({
                     )}
                   </td>
                 </tr>
+                {appt.status === AppointmentStatus.CANCELLED && appt.cancellation_reason && (
+                  <tr
+                    className={cn(
+                      "border-b border-[var(--border)] bg-[var(--error-bg)]/40",
+                      i === rows.length - 1 && "border-b-0"
+                    )}
+                  >
+                    <td colSpan={7} className="px-5 py-2.5">
+                      <div className="flex flex-col sm:flex-row sm:items-start gap-1.5 sm:gap-2 text-xs">
+                        <span className="font-semibold text-[var(--error)] whitespace-nowrap">
+                          Cancellation reason:
+                        </span>
+                        <span className="text-[var(--text-secondary)]">
+                          {appt.cancellation_reason}
+                        </span>
+                      </div>
+                    </td>
+                  </tr>
+                )}
+                </Fragment>
               );
             })}
           </tbody>

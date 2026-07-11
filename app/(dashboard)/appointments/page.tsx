@@ -198,6 +198,7 @@ export default function AppointmentsPage() {
       {cancelTarget && (
         <CancelDialog
           appointment={cancelTarget}
+          isPatient={isPatient}
           onClose={() => setCancelTarget(null)}
           onConfirm={handleCancelConfirm}
         />
