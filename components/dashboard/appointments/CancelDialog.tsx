@@ -8,12 +8,14 @@ import Button from "@/components/ui/Button";
 
 interface CancelDialogProps {
   appointment: Appointment;
+  isPatient?: boolean;
   onConfirm: (reason: string) => Promise<void>;
   onClose: () => void;
 }
 
 export default function CancelDialog({
   appointment,
+  isPatient = false,
   onConfirm,
   onClose,
 }: CancelDialogProps) {
@@ -102,7 +104,9 @@ export default function CancelDialog({
           </div>
 
           <p className="border-l-2 border-[var(--error)] bg-[var(--error-bg)] px-3 py-2 text-xs text-[var(--text-secondary)]">
-            Cancellation is available only until the day before the appointment. Same-day cancellation is not allowed.
+            {isPatient
+              ? "Cancellation is available only until the day before the appointment. Same-day cancellation is not allowed."
+              : "Cancelling this appointment will make the slot unavailable to the patient and update the appointment status."}
           </p>
 
           {/* Reason */}
