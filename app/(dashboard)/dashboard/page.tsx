@@ -15,7 +15,8 @@ import { Card } from "@/components/ui/Card";
 import Spinner from "@/components/ui/Spinner";
 import { formatDateTime, getGreeting } from "@/lib/utils";
 import { Appointment, AppointmentStatus } from "@/types/appointment";
-import { PaginatedResponse, UserRole } from "@/types/common";
+import { DayOfWeek, PaginatedResponse, UserRole } from "@/types/common";
+import type { Doctor, DoctorSchedule } from "@/types/doctor";
 import { Patient } from "@/types/patient";
 
 // Quick action tiles
@@ -123,6 +124,37 @@ const STATUS_BADGE: Record<AppointmentStatus, { variant: "success" | "warning" |
   [AppointmentStatus.CANCELLED]: { variant: "error", label: "Cancelled" },
   [AppointmentStatus.NO_SHOW]: { variant: "warning", label: "No-show" },
 };
+
+const WEEK_DAYS: { label: string; value: DayOfWeek }[] = [
+  { label: "Mon", value: DayOfWeek.MONDAY },
+  { label: "Tue", value: DayOfWeek.TUESDAY },
+  { label: "Wed", value: DayOfWeek.WEDNESDAY },
+  { label: "Thu", value: DayOfWeek.THURSDAY },
+  { label: "Fri", value: DayOfWeek.FRIDAY },
+  { label: "Sat", value: DayOfWeek.SATURDAY },
+  { label: "Sun", value: DayOfWeek.SUNDAY },
+];
+
+function toDateParam(date: Date): string {
+  const yyyy = date.getFullYear();
+  const mm = String(date.getMonth() + 1).padStart(2, "0");
+  const dd = String(date.getDate()).padStart(2, "0");
+  return `${yyyy}-${mm}-${dd}`;
+}
+
+function tomorrowDate(): Date {
+  const date = new Date();
+  date.setDate(date.getDate() + 1);
+  return date;
+}
+
+function countByStatus(appointments: Appointment[], status: AppointmentStatus): number {
+  return appointments.filter((appointment) => appointment.status === status).length;
+}
+
+function formatScheduleTime(value: string): string {
+  return value.slice(0, 5);
+}
 
 function PatientDashboard() {
   const { user } = useAuth();
@@ -428,6 +460,377 @@ function PatientDashboard() {
   );
 }
 
+function DoctorDashboard() {
+  const { user } = useAuth();
+  const [doctor, setDoctor] = useState<Doctor | null>(null);
+  const [schedules, setSchedules] = useState<DoctorSchedule[]>([]);
+  const [todayAppointments, setTodayAppointments] = useState<Appointment[]>([]);
+  const [tomorrowAppointments, setTomorrowAppointments] = useState<Appointment[]>([]);
+  const [scheduledAppointments, setScheduledAppointments] = useState<Appointment[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+
+  const fetchDoctorDashboard = useCallback(async () => {
+    setLoading(true);
+    setError("");
+    try {
+      const today = toDateParam(new Date());
+      const tomorrow = toDateParam(tomorrowDate());
+
+      const [todayRes, tomorrowRes, scheduledRes] = await Promise.all([
+        api.get<PaginatedResponse<Appointment>>("/api/v1/appointments/", {
+          params: { page: 1, page_size: 100, date: today },
+        }),
+        api.get<PaginatedResponse<Appointment>>("/api/v1/appointments/", {
+          params: { page: 1, page_size: 100, date: tomorrow },
+        }),
+        api.get<PaginatedResponse<Appointment>>("/api/v1/appointments/", {
+          params: {
+            page: 1,
+            page_size: 50,
+            status: AppointmentStatus.SCHEDULED,
+          },
+        }),
+      ]);
+
+      setTodayAppointments(todayRes.data.data ?? []);
+      setTomorrowAppointments(tomorrowRes.data.data ?? []);
+      setScheduledAppointments(scheduledRes.data.data ?? []);
+
+      if (user?.user_id) {
+        const doctorsRes = await api.get<PaginatedResponse<Doctor>>("/api/v1/doctors", {
+          params: { page: 1, page_size: 100 },
+        });
+        const currentDoctor = (doctorsRes.data.data ?? []).find(
+          (item) => item.user_id === user.user_id
+        );
+        setDoctor(currentDoctor ?? null);
+
+        if (currentDoctor) {
+          const schedulesRes = await api.get<DoctorSchedule[]>(
+            `/api/v1/doctors/${currentDoctor.id}/schedules`
+          );
+          setSchedules(schedulesRes.data);
+        } else {
+          setSchedules([]);
+        }
+      }
+    } catch (err) {
+      setDoctor(null);
+      setSchedules([]);
+      setTodayAppointments([]);
+      setTomorrowAppointments([]);
+      setScheduledAppointments([]);
+      setError(parseApiError(err));
+    } finally {
+      setLoading(false);
+    }
+  }, [user?.user_id]);
+
+  useEffect(() => {
+    fetchDoctorDashboard();
+  }, [fetchDoctorDashboard]);
+
+  const nextAppointment = useMemo(() => {
+    const now = new Date();
+
+    return scheduledAppointments
+      .filter((appointment) => new Date(appointment.slot_time) >= now)
+      .sort(
+        (a, b) =>
+          new Date(a.slot_time).getTime() - new Date(b.slot_time).getTime()
+      )[0] ?? null;
+  }, [scheduledAppointments]);
+
+  const nextStatus = nextAppointment
+    ? STATUS_BADGE[nextAppointment.status]
+    : null;
+  const scheduleByDay = useMemo(() => {
+    return new Map(schedules.map((schedule) => [schedule.day_of_week, schedule]));
+  }, [schedules]);
+  const activeScheduleDays = schedules.length;
+  const greeting = getGreeting();
+  const firstName = user?.first_name ?? "doctor";
+
+  const doctorStats = [
+    {
+      label: "Today scheduled",
+      value: loading ? "..." : countByStatus(todayAppointments, AppointmentStatus.SCHEDULED),
+      icon: (
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+          <rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/>
+        </svg>
+      ),
+    },
+    {
+      label: "Today completed",
+      value: loading ? "..." : countByStatus(todayAppointments, AppointmentStatus.COMPLETED),
+      icon: (
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+          <path d="M20 6 9 17l-5-5"/>
+        </svg>
+      ),
+    },
+    {
+      label: "Today cancelled",
+      value: loading ? "..." : countByStatus(todayAppointments, AppointmentStatus.CANCELLED),
+      icon: (
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+          <circle cx="12" cy="12" r="10"/><path d="M15 9 9 15M9 9l6 6"/>
+        </svg>
+      ),
+    },
+    {
+      label: "Tomorrow scheduled",
+      value: loading ? "..." : countByStatus(tomorrowAppointments, AppointmentStatus.SCHEDULED),
+      accent: true,
+      icon: (
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+          <path d="M8 2v4M16 2v4M3 10h18"/><rect x="3" y="4" width="18" height="18" rx="2"/>
+        </svg>
+      ),
+    },
+  ];
+
+  return (
+    <div>
+      <PageHeader
+        title={`${greeting}, Dr. ${firstName}`}
+        subtitle="Your appointment overview"
+        actions={
+          <Link href="/my-schedule">
+            <Button variant="secondary" size="sm">
+              My Schedule
+            </Button>
+          </Link>
+        }
+      />
+
+      {error && (
+        <div className="mb-4 rounded-lg px-4 py-3 text-sm bg-[var(--error-bg)] text-[var(--error)] border border-[var(--error)]">
+          {error}
+        </div>
+      )}
+
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
+        {doctorStats.map((stat) => (
+          <StatCard
+            key={stat.label}
+            label={stat.label}
+            value={stat.value}
+            icon={stat.icon}
+            accent={stat.accent}
+          />
+        ))}
+      </div>
+
+      <div className="grid grid-cols-1 xl:grid-cols-[minmax(0,1fr)_340px] gap-4">
+        <Card padding="lg" className="min-h-[240px]">
+          <div className="flex items-start justify-between gap-4">
+            <div>
+              <h2 className="text-sm font-semibold text-[var(--text-primary)]">
+                Next patient
+              </h2>
+              <p className="text-xs text-[var(--text-muted)] mt-1">
+                Nearest upcoming scheduled appointment
+              </p>
+            </div>
+            <Link
+              href="/appointments"
+              className="text-sm font-medium text-[var(--accent)] hover:text-[var(--accent-hover)]"
+            >
+              View appointments
+            </Link>
+          </div>
+
+          <div className="mt-8">
+            {loading ? (
+              <div className="flex items-center gap-2 text-sm text-[var(--text-muted)]">
+                <Spinner size="sm" /> Loading next patient...
+              </div>
+            ) : nextAppointment ? (
+              <div className="grid grid-cols-1 md:grid-cols-[minmax(0,1fr)_auto] gap-5 items-end">
+                <div>
+                  <div className="flex flex-wrap items-center gap-2">
+                    <p className="text-xl font-semibold text-[var(--text-primary)]">
+                      {nextAppointment.patient
+                        ? `${nextAppointment.patient.first_name} ${nextAppointment.patient.last_name}`
+                        : "Patient appointment"}
+                    </p>
+                    {nextStatus && (
+                      <Badge variant={nextStatus.variant}>{nextStatus.label}</Badge>
+                    )}
+                  </div>
+                  <p className="text-sm text-[var(--text-secondary)] mt-1 capitalize">
+                    {nextAppointment.type.replace("_", " ")}
+                  </p>
+                  <p className="text-sm font-medium text-[var(--text-primary)] mt-5">
+                    {formatDateTime(nextAppointment.slot_time)}
+                  </p>
+                  <p className="text-xs text-[var(--text-muted)] mt-1">
+                    {nextAppointment.token_number
+                      ? `Token #${nextAppointment.token_number}`
+                      : "Token not assigned"}
+                    {nextAppointment.patient?.phone
+                      ? ` - ${nextAppointment.patient.phone}`
+                      : ""}
+                  </p>
+                </div>
+
+                <Link href="/appointments">
+                  <Button variant="primary" size="sm">
+                    Open appointment
+                  </Button>
+                </Link>
+              </div>
+            ) : (
+              <div className="flex flex-col gap-3">
+                <p className="text-sm font-medium text-[var(--text-primary)]">
+                  No upcoming patient
+                </p>
+                <p className="text-sm text-[var(--text-muted)] max-w-lg">
+                  Scheduled appointments will appear here when patients book a slot.
+                </p>
+              </div>
+            )}
+          </div>
+        </Card>
+
+        <Card padding="lg" className="min-h-[240px]">
+          <div className="flex items-start justify-between gap-4 mb-5">
+            <div>
+              <h2 className="text-sm font-semibold text-[var(--text-primary)]">
+                Today queue
+              </h2>
+              <p className="text-xs text-[var(--text-muted)] mt-1">
+                First five appointments today
+              </p>
+            </div>
+            <Badge variant="neutral">
+              {loading ? "..." : todayAppointments.length} total
+            </Badge>
+          </div>
+
+          {loading ? (
+            <div className="flex items-center gap-2 py-8 text-sm text-[var(--text-muted)]">
+              <Spinner size="sm" /> Loading queue...
+            </div>
+          ) : todayAppointments.length === 0 ? (
+            <div className="py-8">
+              <p className="text-sm font-medium text-[var(--text-primary)]">
+                No appointments today
+              </p>
+              <p className="text-sm text-[var(--text-muted)] mt-1">
+                Your queue is clear for today.
+              </p>
+            </div>
+          ) : (
+            <div className="divide-y divide-[var(--border)]">
+              {todayAppointments
+                .slice()
+                .sort(
+                  (a, b) =>
+                    new Date(a.slot_time).getTime() - new Date(b.slot_time).getTime()
+                )
+                .slice(0, 5)
+                .map((appointment) => {
+                  const status = STATUS_BADGE[appointment.status];
+                  return (
+                    <div key={appointment.id} className="py-3 first:pt-0 last:pb-0">
+                      <div className="flex items-start justify-between gap-3">
+                        <div className="min-w-0">
+                          <p className="text-sm font-medium text-[var(--text-primary)] truncate">
+                            {appointment.patient
+                              ? `${appointment.patient.first_name} ${appointment.patient.last_name}`
+                              : "Patient"}
+                          </p>
+                          <p className="text-xs text-[var(--text-muted)] mt-1">
+                            {formatDateTime(appointment.slot_time)}
+                          </p>
+                        </div>
+                        <Badge variant={status.variant}>{status.label}</Badge>
+                      </div>
+                    </div>
+                  );
+                })}
+            </div>
+          )}
+        </Card>
+      </div>
+
+      <div className="mt-4">
+        <Card padding="lg">
+          <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4 mb-5">
+            <div>
+              <h2 className="text-sm font-semibold text-[var(--text-primary)]">
+                Schedule status
+              </h2>
+              <p className="text-xs text-[var(--text-muted)] mt-1">
+                {doctor
+                  ? `${doctor.specialization} availability for patient bookings`
+                  : "Weekly availability for patient bookings"}
+              </p>
+            </div>
+            <div className="flex items-center gap-2">
+              <Badge variant={activeScheduleDays > 0 ? "success" : "warning"} dot>
+                {loading
+                  ? "Loading"
+                  : activeScheduleDays > 0
+                    ? `${activeScheduleDays} active day${activeScheduleDays === 1 ? "" : "s"}`
+                    : "Schedule needed"}
+              </Badge>
+              <Link href="/my-schedule">
+                <Button variant="ghost" size="sm">
+                  Manage
+                </Button>
+              </Link>
+            </div>
+          </div>
+
+          {loading ? (
+            <div className="flex items-center gap-2 py-6 text-sm text-[var(--text-muted)]">
+              <Spinner size="sm" /> Loading schedule...
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-2">
+              {WEEK_DAYS.map((day) => {
+                const schedule = scheduleByDay.get(day.value);
+                return (
+                  <div
+                    key={day.value}
+                    className="flex items-center justify-between gap-3 rounded-[var(--radius-md)] border border-[var(--border)] px-3 py-2.5 bg-white"
+                  >
+                    <div className="min-w-0">
+                      <p className="text-sm font-medium text-[var(--text-primary)]">
+                        {day.label}
+                      </p>
+                      <p className="text-xs text-[var(--text-muted)] mt-0.5">
+                        {schedule
+                          ? `${formatScheduleTime(schedule.start_time)} - ${formatScheduleTime(schedule.end_time)}`
+                          : "Inactive"}
+                      </p>
+                    </div>
+                    <div className="flex items-center gap-2 shrink-0">
+                      {schedule && (
+                        <span className="text-xs font-mono text-[var(--text-secondary)]">
+                          {schedule.slot_duration_minutes}m
+                        </span>
+                      )}
+                      <Badge variant={schedule ? "success" : "neutral"} dot>
+                        {schedule ? "Active" : "Inactive"}
+                      </Badge>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </Card>
+      </div>
+    </div>
+  );
+}
+
 export default function DashboardPage() {
   const { user } = useAuth();
 
@@ -441,6 +844,10 @@ export default function DashboardPage() {
 
   if (user?.role === UserRole.PATIENT) {
     return <PatientDashboard />;
+  }
+
+  if (user?.role === UserRole.DOCTOR) {
+    return <DoctorDashboard />;
   }
 
   return (
