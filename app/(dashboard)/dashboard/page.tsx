@@ -588,43 +588,39 @@ function DoctorDashboard() {
   const greeting = getGreeting();
   const firstName = user?.first_name ?? "doctor";
 
-  const doctorStats = [
+  const appointmentCountGroups = [
     {
-      label: "Today scheduled",
-      value: loading ? "..." : countByStatus(todayAppointments, AppointmentStatus.SCHEDULED),
-      icon: (
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
-          <rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/>
-        </svg>
-      ),
+      title: "Today",
+      subtitle: toDateParam(new Date()),
+      appointments: todayAppointments,
     },
     {
-      label: "Today completed",
-      value: loading ? "..." : countByStatus(todayAppointments, AppointmentStatus.COMPLETED),
-      icon: (
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
-          <path d="M20 6 9 17l-5-5"/>
-        </svg>
-      ),
+      title: "Tomorrow",
+      subtitle: toDateParam(tomorrowDate()),
+      appointments: tomorrowAppointments,
+    },
+  ];
+
+  const appointmentCountStatuses = [
+    {
+      label: "Scheduled",
+      status: AppointmentStatus.SCHEDULED,
+      variant: "info" as const,
     },
     {
-      label: "Today cancelled",
-      value: loading ? "..." : countByStatus(todayAppointments, AppointmentStatus.CANCELLED),
-      icon: (
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
-          <circle cx="12" cy="12" r="10"/><path d="M15 9 9 15M9 9l6 6"/>
-        </svg>
-      ),
+      label: "Completed",
+      status: AppointmentStatus.COMPLETED,
+      variant: "success" as const,
     },
     {
-      label: "Tomorrow scheduled",
-      value: loading ? "..." : countByStatus(tomorrowAppointments, AppointmentStatus.SCHEDULED),
-      accent: true,
-      icon: (
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
-          <path d="M8 2v4M16 2v4M3 10h18"/><rect x="3" y="4" width="18" height="18" rx="2"/>
-        </svg>
-      ),
+      label: "Cancelled",
+      status: AppointmentStatus.CANCELLED,
+      variant: "error" as const,
+    },
+    {
+      label: "No-show",
+      status: AppointmentStatus.NO_SHOW,
+      variant: "warning" as const,
     },
   ];
 
@@ -648,15 +644,43 @@ function DoctorDashboard() {
         </div>
       )}
 
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
-        {doctorStats.map((stat) => (
-          <StatCard
-            key={stat.label}
-            label={stat.label}
-            value={stat.value}
-            icon={stat.icon}
-            accent={stat.accent}
-          />
+      <div className="grid grid-cols-1 xl:grid-cols-2 gap-4 mb-4">
+        {appointmentCountGroups.map((group) => (
+          <Card key={group.title} padding="lg">
+            <div className="flex items-start justify-between gap-4 mb-4">
+              <div>
+                <h2 className="text-sm font-semibold text-[var(--text-primary)]">
+                  {group.title} appointments
+                </h2>
+                <p className="text-xs text-[var(--text-muted)] mt-1">
+                  {group.subtitle}
+                </p>
+              </div>
+              <Badge variant="neutral">
+                {loading ? "..." : group.appointments.length} total
+              </Badge>
+            </div>
+
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+              {appointmentCountStatuses.map((item) => (
+                <div
+                  key={`${group.title}-${item.status}`}
+                  className="rounded-[var(--radius-md)] border border-[var(--border)] bg-[var(--gray-50)] px-3 py-3"
+                >
+                  <div className="flex items-center justify-between gap-2">
+                    <span className="text-xs font-medium text-[var(--text-muted)]">
+                      {item.label}
+                    </span>
+                    <Badge variant={item.variant} dot>
+                      {loading
+                        ? "..."
+                        : countByStatus(group.appointments, item.status)}
+                    </Badge>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </Card>
         ))}
       </div>
 
