@@ -16,7 +16,12 @@ import Spinner from "@/components/ui/Spinner";
 import { formatDateTime, getGreeting } from "@/lib/utils";
 import { Appointment, AppointmentStatus } from "@/types/appointment";
 import { DayOfWeek, PaginatedResponse, UserRole } from "@/types/common";
-import type { Doctor, DoctorSchedule } from "@/types/doctor";
+import type {
+  Doctor,
+  DoctorLeave,
+  DoctorSchedule,
+  DoctorSlotBlock,
+} from "@/types/doctor";
 import { Patient } from "@/types/patient";
 
 // Quick action tiles
@@ -154,6 +159,14 @@ function countByStatus(appointments: Appointment[], status: AppointmentStatus): 
 
 function formatScheduleTime(value: string): string {
   return value.slice(0, 5);
+}
+
+function formatDateLabel(value: string): string {
+  return new Date(`${value}T00:00:00`).toLocaleDateString([], {
+    day: "2-digit",
+    month: "short",
+    year: "numeric",
+  });
 }
 
 function PatientDashboard() {
@@ -464,6 +477,8 @@ function DoctorDashboard() {
   const { user } = useAuth();
   const [doctor, setDoctor] = useState<Doctor | null>(null);
   const [schedules, setSchedules] = useState<DoctorSchedule[]>([]);
+  const [leaves, setLeaves] = useState<DoctorLeave[]>([]);
+  const [tomorrowBlocks, setTomorrowBlocks] = useState<DoctorSlotBlock[]>([]);
   const [todayAppointments, setTodayAppointments] = useState<Appointment[]>([]);
   const [tomorrowAppointments, setTomorrowAppointments] = useState<Appointment[]>([]);
   const [scheduledAppointments, setScheduledAppointments] = useState<Appointment[]>([]);
@@ -507,17 +522,30 @@ function DoctorDashboard() {
         setDoctor(currentDoctor ?? null);
 
         if (currentDoctor) {
-          const schedulesRes = await api.get<DoctorSchedule[]>(
-            `/api/v1/doctors/${currentDoctor.id}/schedules`
-          );
+          const [schedulesRes, leavesRes, blocksRes] = await Promise.all([
+            api.get<DoctorSchedule[]>(
+              `/api/v1/doctors/${currentDoctor.id}/schedules`
+            ),
+            api.get<DoctorLeave[]>(`/api/v1/doctors/${currentDoctor.id}/leaves`),
+            api.get<DoctorSlotBlock[]>(
+              `/api/v1/doctors/${currentDoctor.id}/slot-blocks`,
+              { params: { date: tomorrow } }
+            ),
+          ]);
           setSchedules(schedulesRes.data);
+          setLeaves(leavesRes.data);
+          setTomorrowBlocks(blocksRes.data);
         } else {
           setSchedules([]);
+          setLeaves([]);
+          setTomorrowBlocks([]);
         }
       }
     } catch (err) {
       setDoctor(null);
       setSchedules([]);
+      setLeaves([]);
+      setTomorrowBlocks([]);
       setTodayAppointments([]);
       setTomorrowAppointments([]);
       setScheduledAppointments([]);
@@ -548,6 +576,14 @@ function DoctorDashboard() {
   const scheduleByDay = useMemo(() => {
     return new Map(schedules.map((schedule) => [schedule.day_of_week, schedule]));
   }, [schedules]);
+  const upcomingLeaves = useMemo(() => {
+    const today = toDateParam(new Date());
+
+    return leaves
+      .filter((leave) => leave.leave_date >= today)
+      .sort((a, b) => a.leave_date.localeCompare(b.leave_date))
+      .slice(0, 5);
+  }, [leaves]);
   const activeScheduleDays = schedules.length;
   const greeting = getGreeting();
   const firstName = user?.first_name ?? "doctor";
@@ -823,6 +859,108 @@ function DoctorDashboard() {
                   </div>
                 );
               })}
+            </div>
+          )}
+        </Card>
+      </div>
+
+      <div className="mt-4">
+        <Card padding="lg">
+          <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4 mb-5">
+            <div>
+              <h2 className="text-sm font-semibold text-[var(--text-primary)]">
+                Blocked availability
+              </h2>
+              <p className="text-xs text-[var(--text-muted)] mt-1">
+                Dates and slots patients cannot book
+              </p>
+            </div>
+            <Link href="/my-schedule">
+              <Button variant="ghost" size="sm">
+                Manage slots
+              </Button>
+            </Link>
+          </div>
+
+          {loading ? (
+            <div className="flex items-center gap-2 py-6 text-sm text-[var(--text-muted)]">
+              <Spinner size="sm" /> Loading blocked availability...
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+              <div className="rounded-[var(--radius-md)] border border-[var(--border)] px-4 py-3">
+                <div className="flex items-center justify-between gap-3 mb-3">
+                  <div>
+                    <p className="text-sm font-semibold text-[var(--text-primary)]">
+                      Upcoming unavailable days
+                    </p>
+                    <p className="text-xs text-[var(--text-muted)] mt-0.5">
+                      Full-day blocks
+                    </p>
+                  </div>
+                  <Badge variant={upcomingLeaves.length > 0 ? "warning" : "neutral"} dot>
+                    {upcomingLeaves.length}
+                  </Badge>
+                </div>
+
+                {upcomingLeaves.length === 0 ? (
+                  <p className="py-4 text-sm text-[var(--text-muted)]">
+                    No upcoming unavailable days.
+                  </p>
+                ) : (
+                  <div className="divide-y divide-[var(--border)]">
+                    {upcomingLeaves.map((leave) => (
+                      <div key={leave.id} className="py-3 first:pt-0 last:pb-0">
+                        <p className="text-sm font-medium text-[var(--text-primary)]">
+                          {formatDateLabel(leave.leave_date)}
+                        </p>
+                        {leave.reason && (
+                          <p className="text-xs text-[var(--text-muted)] mt-1">
+                            {leave.reason}
+                          </p>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              <div className="rounded-[var(--radius-md)] border border-[var(--border)] px-4 py-3">
+                <div className="flex items-center justify-between gap-3 mb-3">
+                  <div>
+                    <p className="text-sm font-semibold text-[var(--text-primary)]">
+                      Tomorrow blocked slots
+                    </p>
+                    <p className="text-xs text-[var(--text-muted)] mt-0.5">
+                      {formatDateLabel(toDateParam(tomorrowDate()))}
+                    </p>
+                  </div>
+                  <Badge variant={tomorrowBlocks.length > 0 ? "warning" : "neutral"} dot>
+                    {tomorrowBlocks.length}
+                  </Badge>
+                </div>
+
+                {tomorrowBlocks.length === 0 ? (
+                  <p className="py-4 text-sm text-[var(--text-muted)]">
+                    No blocked slots for tomorrow.
+                  </p>
+                ) : (
+                  <div className="divide-y divide-[var(--border)]">
+                    {tomorrowBlocks.map((block) => (
+                      <div key={block.id} className="py-3 first:pt-0 last:pb-0">
+                        <p className="text-sm font-mono font-medium text-[var(--text-primary)]">
+                          {formatScheduleTime(block.start_time)} - {formatScheduleTime(block.end_time)}
+                        </p>
+                        {block.reason && (
+                          <p className="text-xs text-[var(--text-muted)] mt-1">
+                            {block.reason}
+                          </p>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
             </div>
           )}
         </Card>
