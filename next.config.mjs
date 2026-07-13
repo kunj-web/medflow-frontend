@@ -1,10 +1,15 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  webpack: (config, { dev }) => {
-    if (!dev) {
-      config.cache = false;
-    }
-
+  images: {
+    remotePatterns: [
+      {
+        protocol: "https",
+        hostname: "images.unsplash.com",
+      },
+    ],
+  },
+  webpack: (config) => {
+    config.cache = false;
     return config;
   },
 };
