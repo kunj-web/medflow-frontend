@@ -22,13 +22,13 @@ const TEAM_IMAGES = [
 export default function AboutSection() {
   return (
     <section id="about" className="bg-[#dceff5] px-4 pb-16">
-      <div className="mx-auto max-w-6xl rounded-[30px] bg-white px-7 py-16 md:px-12 md:py-20">
+      <div className="mx-auto max-w-6xl rounded-[30px] border border-white/55 bg-white/62 px-7 py-16 shadow-[0_26px_80px_rgba(6,68,88,0.08)] backdrop-blur-2xl md:px-12 md:py-20">
         <div className="grid items-center gap-12 lg:grid-cols-[0.92fr_1fr]">
           <div className="grid h-[420px] grid-cols-2 gap-3 md:h-[500px]">
             {TEAM_IMAGES.map((image) => (
               <div
                 key={image.src}
-                className={`relative overflow-hidden rounded-[24px] bg-[#edf7f9] shadow-[0_16px_34px_rgba(6,68,88,0.10)] ${image.className}`}
+                className={`relative overflow-hidden rounded-[24px] border border-white/55 bg-white/35 shadow-[0_16px_34px_rgba(6,68,88,0.10)] backdrop-blur-xl ${image.className}`}
               >
                 <Image
                   src={image.src}
@@ -57,13 +57,13 @@ export default function AboutSection() {
             <div className="mt-8 flex flex-wrap gap-3">
               <Link
                 href="#features"
-                className="inline-flex h-12 items-center justify-center rounded-full bg-[#18b7ae] px-7 text-sm font-semibold text-white shadow-[0_14px_28px_rgba(24,183,174,0.22)] transition-transform duration-200 hover:-translate-y-0.5 hover:bg-[#109d97]"
+                className="inline-flex h-12 items-center justify-center rounded-full border border-[#80c3cf]/70 bg-[#c8eee6]/75 px-7 text-sm font-semibold text-[#052f3a] shadow-[0_14px_28px_rgba(24,183,174,0.18)] backdrop-blur-xl transition-transform duration-200 hover:-translate-y-0.5 hover:bg-[#b9e7df]"
               >
                 Explore Our Values
               </Link>
               <Link
                 href="/register"
-                className="inline-flex h-12 items-center justify-center rounded-full border border-[#b7d9df] bg-white px-7 text-sm font-semibold text-[#052f3a] transition-colors hover:bg-[#edf7f9]"
+                className="inline-flex h-12 items-center justify-center rounded-full border border-white/60 bg-white/45 px-7 text-sm font-semibold text-[#052f3a] shadow-sm backdrop-blur-xl transition-colors hover:bg-white/70"
               >
                 Join MedFlow
               </Link>

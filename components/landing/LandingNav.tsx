@@ -10,14 +10,14 @@ export default function LandingNav() {
 
   return (
     <header className="fixed top-5 inset-x-0 z-50 px-4">
-      <div className="max-w-6xl mx-auto px-7 h-[72px] flex items-center justify-between rounded-[24px] bg-white/95 shadow-[0_18px_45px_rgba(4,47,64,0.10)] backdrop-blur-md">
+      <div className="max-w-6xl mx-auto px-7 h-[72px] flex items-center justify-between rounded-[24px] border border-white/55 bg-white/68 shadow-[0_18px_45px_rgba(4,47,64,0.10)] backdrop-blur-2xl">
         {/* Logo */}
         <Link href="/" className="flex items-center gap-2.5 group">
           <div className="w-8 h-8 rounded-full bg-[#0a6289] flex items-center justify-center">
             <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
               <path
                 d="M8 2v4M8 10v4M2 8h4M10 8h4"
-                stroke="white"
+                stroke="#052f3a"
                 strokeWidth="2"
                 strokeLinecap="round"
               />
@@ -62,7 +62,7 @@ export default function LandingNav() {
             <Button
               variant="primary"
               size="sm"
-              className="h-11 rounded-full bg-[#18b7ae] px-5 text-white hover:bg-[#109d97]"
+              className="h-11 rounded-full border border-[#80c3cf]/70 bg-[#c8eee6]/75 px-5 text-[#052f3a] hover:bg-[#b9e7df]"
             >
               Login
             </Button>
@@ -89,7 +89,7 @@ export default function LandingNav() {
 
       {/* Mobile menu */}
       <div className={cn(
-        "md:hidden max-w-6xl mx-auto mt-2 rounded-[20px] bg-white overflow-hidden shadow-[0_18px_45px_rgba(4,47,64,0.10)] transition-all duration-200",
+        "md:hidden max-w-6xl mx-auto mt-2 rounded-[20px] border border-white/55 bg-white/72 overflow-hidden shadow-[0_18px_45px_rgba(4,47,64,0.10)] backdrop-blur-2xl transition-all duration-200",
         mobileOpen ? "max-h-64 opacity-100" : "max-h-0 opacity-0"
       )}>
         <nav className="px-6 py-4 flex flex-col gap-3">
