@@ -69,24 +69,50 @@ export default function LoginForm() {
   }
 
   return (
-    <div className="min-h-screen bg-[var(--gray-50)] flex items-center justify-center px-4">
-      <div className="w-full max-w-md">
-        {/* Logo + heading */}
-        <div className="text-center mb-8">
-          <Link href="/" className="inline-flex items-center gap-2 mb-6 group">
-            <div className="w-9 h-9 rounded-[var(--radius-md)] bg-[var(--accent)] flex items-center justify-center">
-              <svg width="18" height="18" viewBox="0 0 16 16" fill="none">
-                <path d="M8 2v4M8 10v4M2 8h4M10 8h4" stroke="white" strokeWidth="2" strokeLinecap="round"/>
-              </svg>
+    <div className="min-h-screen bg-[#dceff5] px-4 py-8">
+      <div className="mx-auto flex min-h-[calc(100vh-4rem)] w-full max-w-5xl items-center">
+        <div className="grid w-full overflow-hidden rounded-[30px] border border-white/60 bg-white/60 shadow-[0_24px_70px_rgba(24,86,115,0.16)] backdrop-blur-2xl lg:grid-cols-[0.95fr_1fr]">
+          <aside className="hidden min-h-[560px] flex-col justify-between bg-[#b9dbe8]/70 p-8 text-[#062f3d] lg:flex">
+            <Link href="/" className="inline-flex items-center gap-3">
+              <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-[#0a6792]/90 text-base font-semibold text-[#eaf8fb]">
+                M
+              </div>
+              <span className="text-xl font-semibold tracking-tight">MedFlow</span>
+            </Link>
+            <div className="space-y-5">
+              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[#24708a]">
+                Care portal
+              </p>
+              <h2 className="max-w-sm text-4xl font-semibold leading-tight tracking-tight">
+                Manage appointments, patients, and care without friction.
+              </h2>
+              <p className="max-w-sm text-sm leading-6 text-[#315866]">
+                Sign in to continue into your secure workspace with the same dashboard tools already connected to your role.
+              </p>
             </div>
-            <span className="font-semibold text-[var(--text-primary)] text-lg tracking-tight">MedFlow</span>
-          </Link>
-          <h1 className="text-xl font-semibold text-[var(--text-primary)] mb-1">Sign in to your portal</h1>
-          <p className="text-sm text-[var(--text-muted)]">Enter your email and password to continue</p>
-        </div>
+            <div className="grid grid-cols-2 gap-3">
+              {["Tomorrow booking", "Doctor schedules", "Patient cards", "Secure access"].map((item) => (
+                <div key={item} className="rounded-2xl border border-white/55 bg-white/45 px-4 py-3 text-sm font-medium shadow-sm backdrop-blur-xl">
+                  {item}
+                </div>
+              ))}
+            </div>
+          </aside>
 
-        {/* Form card */}
-        <div className="card p-6">
+          <main className="flex items-center justify-center px-5 py-8 sm:px-8 lg:px-12">
+            <div className="w-full max-w-md">
+              <div className="mb-8 text-center lg:text-left">
+                <Link href="/" className="mb-6 inline-flex items-center gap-2 rounded-full border border-white/70 bg-white/70 px-3 py-2 shadow-sm backdrop-blur-xl transition-colors hover:bg-white">
+                  <div className="flex h-8 w-8 items-center justify-center rounded-full bg-[#0a6792] text-sm font-semibold text-[#eaf8fb]">
+                    M
+                  </div>
+                  <span className="text-sm font-semibold tracking-tight text-[#062f3d]">MedFlow</span>
+                </Link>
+                <h1 className="text-2xl font-semibold tracking-tight text-[#062f3d]">Sign in to your portal</h1>
+                <p className="mt-2 text-sm text-[#55717b]">Enter your email and password to continue.</p>
+              </div>
+
+              <div className="rounded-[24px] border border-white/70 bg-white/72 p-5 shadow-[0_18px_45px_rgba(24,86,115,0.12)] backdrop-blur-xl sm:p-6">
           {globalError && (
             <div className="mb-5 px-4 py-3 rounded-[var(--radius-md)] bg-[var(--error-bg)] border border-red-200 flex items-start gap-3">
               <svg className="w-4 h-4 text-[var(--error)] mt-0.5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
@@ -117,7 +143,7 @@ export default function LoginForm() {
             <Input
               label="Password"
               type={showPassword ? "text" : "password"}
-              placeholder="••••••••"
+              placeholder="Password"
               value={form.password}
               onChange={handleChange("password")}
               error={fieldErrors.password}
@@ -153,16 +179,25 @@ export default function LoginForm() {
             />
 
             <Button type="submit" variant="primary" size="lg" loading={loading} className="w-full mt-1">
-              {loading ? "Signing in…" : "Sign in"}
+              {loading ? "Signing in..." : "Sign in"}
             </Button>
           </form>
-        </div>
+              </div>
 
-        <p className="text-center text-xs text-[var(--text-muted)] mt-6">
-          <Link href="/" className="hover:text-[var(--text-secondary)] transition-colors">
-            ← Back to MedFlow home
-          </Link>
-        </p>
+              <p className="mt-6 text-center text-xs text-[#55717b]">
+                New to MedFlow?{" "}
+                <Link href="/register" className="font-semibold text-[#0a6792] transition-colors hover:text-[#064c68]">
+                  Create an account
+                </Link>
+              </p>
+              <p className="mt-3 text-center text-xs text-[#6b838c]">
+                <Link href="/" className="transition-colors hover:text-[#062f3d]">
+                  Back to MedFlow home
+                </Link>
+              </p>
+            </div>
+          </main>
+        </div>
       </div>
     </div>
   );
