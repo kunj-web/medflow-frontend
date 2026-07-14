@@ -41,6 +41,23 @@ export default function AppointmentsPage() {
 
   const [bookOpen, setBookOpen] = useState(false);
   const [cancelTarget, setCancelTarget] = useState<Appointment | null>(null);
+  const patientStats = [
+    {
+      label: "Scheduled",
+      value: appointments.filter((item) => item.status === AppointmentStatus.SCHEDULED).length,
+      tone: "bg-[#d9edbd]/80",
+    },
+    {
+      label: "Completed",
+      value: appointments.filter((item) => item.status === AppointmentStatus.COMPLETED).length,
+      tone: "bg-[#bfe0f2]/80",
+    },
+    {
+      label: "Cancelled",
+      value: appointments.filter((item) => item.status === AppointmentStatus.CANCELLED).length,
+      tone: "bg-[#ffc2dc]/75",
+    },
+  ];
 
   const fetchAppointments = useCallback(async () => {
     setLoading(true);
@@ -92,7 +109,7 @@ export default function AppointmentsPage() {
   }
 
   return (
-    <div>
+    <div className="space-y-5">
       <PageHeader
         title="Appointments"
         subtitle={isPatient ? "View and book your appointments" : "Review scheduled patient appointments"}
@@ -115,29 +132,52 @@ export default function AppointmentsPage() {
       />
 
       {isPatient && (
-        <div className="mb-4 border border-[var(--border)] bg-[var(--gray-50)] px-4 py-3">
-          <p className="text-sm font-medium text-[var(--text-primary)]">
-            Appointment booking and cancellation
-          </p>
-          <ul className="mt-1.5 space-y-1 text-xs text-[var(--text-secondary)]">
-            <li>You can book appointments starting from tomorrow. Same-day booking is not available.</li>
-            <li>Appointments can be cancelled up to one day before the appointment, but not on the appointment day.</li>
-          </ul>
-        </div>
+        <section className="overflow-hidden rounded-[28px] border border-white/65 bg-[#dceff5]/80 p-5 shadow-[0_20px_60px_rgba(24,86,115,0.12)] backdrop-blur-2xl sm:p-6">
+          <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_360px] lg:items-end">
+            <div>
+              <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[#24708a]">
+                Patient appointments
+              </p>
+              <h2 className="mt-3 max-w-2xl text-3xl font-semibold tracking-normal text-[#062f3d] sm:text-4xl">
+                Book future visits and manage your appointment history.
+              </h2>
+              <p className="mt-3 max-w-xl text-sm leading-6 text-[#456773]">
+                You can book appointments starting from tomorrow. Same-day
+                booking is not available, and cancellation closes on the
+                appointment day.
+              </p>
+            </div>
+            <div className="grid grid-cols-3 gap-3">
+              {patientStats.map((item) => (
+                <div
+                  key={item.label}
+                  className={`${item.tone} rounded-2xl border border-white/60 px-3 py-4 text-[#062f3d] shadow-sm backdrop-blur-xl`}
+                >
+                  <p className="text-2xl font-semibold leading-none">
+                    {loading ? "..." : item.value}
+                  </p>
+                  <p className="mt-2 text-xs font-medium text-[#456773]">
+                    {item.label}
+                  </p>
+                </div>
+              ))}
+            </div>
+          </div>
+        </section>
       )}
 
-      <Card padding="none">
-        <div className="flex flex-col sm:flex-row sm:items-center gap-3 px-5 py-3 border-b border-[var(--border)]">
+      <Card padding="none" className="overflow-hidden border-white/70 bg-white/72 shadow-[0_18px_45px_rgba(24,86,115,0.12)] backdrop-blur-xl">
+        <div className="flex flex-col gap-4 border-b border-[#d8edf3] bg-[#f8fcfd]/70 px-5 py-4 sm:flex-row sm:items-center">
           <div className="flex items-center gap-1 flex-wrap">
             {STATUS_TABS.map((tab) => (
               <button
                 key={tab.value}
                 onClick={() => handleStatusChange(tab.value)}
                 className={cn(
-                  "px-3 py-1.5 rounded-[var(--radius-md)] text-xs font-medium transition-colors whitespace-nowrap",
+                  "rounded-full px-3 py-1.5 text-xs font-semibold transition-colors whitespace-nowrap",
                   activeStatus === tab.value
-                    ? "bg-[var(--accent)] text-white"
-                    : "text-[var(--text-secondary)] hover:bg-[var(--gray-100)]"
+                    ? "bg-[#0a6792] text-[#eaf8fb] shadow-sm"
+                    : "border border-[#d8edf3] bg-white/70 text-[#55717b] hover:bg-[#edf8fb] hover:text-[#062f3d]"
                 )}
               >
                 {tab.label}
@@ -151,12 +191,12 @@ export default function AppointmentsPage() {
                 type="date"
                 value={dateFilter}
                 onChange={handleDateChange}
-                className="h-8 pl-3 pr-8 rounded-[var(--radius-md)] border border-[var(--border)] text-xs text-[var(--text-primary)] bg-white focus:outline-none focus:ring-2 focus:ring-[var(--accent)] focus:border-[var(--accent)] transition-colors"
+                className="h-9 rounded-full border border-[#d8edf3] bg-white/80 pl-3 pr-8 text-xs text-[#062f3d] transition-colors focus:border-[#0a6792] focus:outline-none focus:ring-2 focus:ring-[#0a6792]"
               />
               {dateFilter && (
                 <button
                   onClick={handleClearDate}
-                  className="absolute right-2 text-[var(--text-muted)] hover:text-[var(--text-primary)]"
+                  className="absolute right-2 text-[#55717b] hover:text-[#062f3d]"
                   aria-label="Clear date"
                 >
                   <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
@@ -169,7 +209,7 @@ export default function AppointmentsPage() {
         </div>
 
         {fetchError && (
-          <div className="px-5 py-3 bg-[var(--error-bg)] border-b border-red-200">
+          <div className="border-b border-red-200 bg-[var(--error-bg)] px-5 py-3">
             <p className="text-sm text-[var(--error)]">{fetchError}</p>
           </div>
         )}

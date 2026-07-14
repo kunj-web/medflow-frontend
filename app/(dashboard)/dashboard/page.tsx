@@ -263,23 +263,76 @@ function PatientDashboard() {
     : null;
   const greeting = getGreeting();
   const firstName = user?.first_name ?? "there";
+  const patientOverview = [
+    {
+      label: "Upcoming",
+      value: appointments.length,
+      tone: "bg-[#d9edbd]/80",
+    },
+    {
+      label: "Completed",
+      value: countByStatus(recentAppointments, AppointmentStatus.COMPLETED),
+      tone: "bg-[#bfe0f2]/80",
+    },
+    {
+      label: "Cancelled",
+      value: countByStatus(recentAppointments, AppointmentStatus.CANCELLED),
+      tone: "bg-[#ffc2dc]/75",
+    },
+  ];
 
   return (
-    <div>
+    <div className="space-y-5">
       <PageHeader
         title={`${greeting}, ${firstName}`}
-        subtitle="Your dashboard"
+        subtitle="Your care dashboard"
       />
 
-      <div className="grid grid-cols-1 xl:grid-cols-[minmax(0,1fr)_320px] gap-4">
-        <Card padding="lg" className="min-h-[220px]">
-          <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
-            <div>
-              <h2 className="text-sm font-semibold text-[var(--text-primary)]">
+      <section className="overflow-hidden rounded-[28px] border border-white/65 bg-[#dceff5]/80 p-5 shadow-[0_20px_60px_rgba(24,86,115,0.12)] backdrop-blur-2xl sm:p-6">
+        <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_360px] lg:items-end">
+          <div>
+            <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[#24708a]">
+              Patient workspace
+            </p>
+            <h2 className="mt-3 max-w-2xl text-3xl font-semibold tracking-normal text-[#062f3d] sm:text-4xl">
+              Keep your visits, health card, and booking flow in one place.
+            </h2>
+            <p className="mt-3 max-w-xl text-sm leading-6 text-[#456773]">
+              Appointments can be booked from tomorrow onward. Same-day
+              cancellation is not available, so manage changes at least one day
+              before your visit.
+            </p>
+          </div>
+          <div className="grid grid-cols-3 gap-3">
+            {patientOverview.map((item) => (
+              <div
+                key={item.label}
+                className={`${item.tone} rounded-2xl border border-white/60 px-3 py-4 text-[#062f3d] shadow-sm backdrop-blur-xl`}
+              >
+                <p className="text-2xl font-semibold leading-none">
+                  {recentLoading && item.label !== "Upcoming" ? "..." : item.value}
+                </p>
+                <p className="mt-2 text-xs font-medium text-[#456773]">
+                  {item.label}
+                </p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      <div className="grid grid-cols-1 gap-4 xl:grid-cols-[minmax(0,1fr)_340px]">
+        <Card padding="lg" className="min-h-[250px] border-white/70 bg-white/72 shadow-[0_18px_45px_rgba(24,86,115,0.12)] backdrop-blur-xl">
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+            <div className="min-w-0">
+              <div className="inline-flex rounded-full border border-[#b7d5de] bg-[#edf8fb] px-3 py-1 text-xs font-semibold text-[#0a6792]">
                 Next appointment
-              </h2>
-              <p className="text-xs text-[var(--text-muted)] mt-1">
+              </div>
+              <h2 className="mt-4 text-xl font-semibold tracking-normal text-[#062f3d]">
                 Your nearest scheduled visit
+              </h2>
+              <p className="mt-1 text-sm text-[#55717b]">
+                Review the appointment details before you visit.
               </p>
             </div>
             <Button
@@ -296,7 +349,7 @@ function PatientDashboard() {
             </Button>
           </div>
 
-          <div className="mt-8">
+          <div className="mt-8 rounded-2xl border border-[#d8edf3] bg-[#f8fcfd]/78 p-4">
             {loading ? (
               <div className="flex items-center gap-2 text-sm text-[var(--text-muted)]">
                 <Spinner size="sm" /> Loading next appointment...
@@ -307,7 +360,7 @@ function PatientDashboard() {
               <div className="grid grid-cols-1 md:grid-cols-[minmax(0,1fr)_auto] gap-5 items-end">
                 <div>
                   <div className="flex flex-wrap items-center gap-2">
-                    <p className="text-xl font-semibold text-[var(--text-primary)]">
+                    <p className="text-xl font-semibold text-[#062f3d]">
                       {nextAppointment.doctor
                         ? `Dr. ${nextAppointment.doctor.first_name} ${nextAppointment.doctor.last_name}`
                         : "Doctor appointment"}
@@ -316,13 +369,13 @@ function PatientDashboard() {
                       <Badge variant={statusMeta.variant}>{statusMeta.label}</Badge>
                     )}
                   </div>
-                  <p className="text-sm text-[var(--text-secondary)] mt-1">
+                  <p className="text-sm text-[#55717b] mt-1">
                     {nextAppointment.doctor?.specialization ?? "Doctor"}
                   </p>
-                  <p className="text-sm font-medium text-[var(--text-primary)] mt-5">
+                  <p className="text-sm font-medium text-[#062f3d] mt-5">
                     {formatDateTime(nextAppointment.slot_time)}
                   </p>
-                  <p className="text-xs text-[var(--text-muted)] mt-1 capitalize">
+                  <p className="text-xs text-[#55717b] mt-1 capitalize">
                     {nextAppointment.type.replace("_", " ")}
                     {nextAppointment.token_number
                       ? ` - Token #${nextAppointment.token_number}`
@@ -332,17 +385,17 @@ function PatientDashboard() {
 
                 <Link
                   href="/appointments"
-                  className="text-sm font-medium text-[var(--accent)] hover:text-[var(--accent-hover)]"
+                  className="text-sm font-semibold text-[#0a6792] hover:text-[#064c68]"
                 >
                   View appointments
                 </Link>
               </div>
             ) : (
               <div className="flex flex-col gap-3">
-                <p className="text-sm font-medium text-[var(--text-primary)]">
+                <p className="text-sm font-semibold text-[#062f3d]">
                   No upcoming appointment
                 </p>
-                <p className="text-sm text-[var(--text-muted)] max-w-lg">
+                <p className="text-sm text-[#55717b] max-w-lg">
                   Book a visit with an available doctor when you are ready.
                 </p>
               </div>
@@ -350,14 +403,21 @@ function PatientDashboard() {
           </div>
         </Card>
 
-        <Card padding="lg" className="flex flex-col justify-between gap-6 min-h-[220px]">
+        <Card padding="lg" className="flex min-h-[250px] flex-col justify-between gap-6 border-white/70 bg-white/72 shadow-[0_18px_45px_rgba(24,86,115,0.12)] backdrop-blur-xl">
           <div>
-            <h2 className="text-sm font-semibold text-[var(--text-primary)]">
+            <div className="inline-flex rounded-full border border-[#b7d5de] bg-[#edf8fb] px-3 py-1 text-xs font-semibold text-[#0a6792]">
               Quick book
+            </div>
+            <h2 className="mt-4 text-xl font-semibold tracking-normal text-[#062f3d]">
+              Need a new appointment?
             </h2>
-            <p className="text-xs text-[var(--text-muted)] mt-1">
-              Open the booking flow and choose doctor, date, and slot.
+            <p className="mt-2 text-sm leading-6 text-[#55717b]">
+              This opens the existing booking flow. Choose your doctor, pick a
+              future date, then select an available slot.
             </p>
+          </div>
+          <div className="rounded-2xl border border-[#d8edf3] bg-[#f8fcfd]/78 px-4 py-3 text-xs leading-5 text-[#55717b]">
+            Booking starts from tomorrow. Today is intentionally unavailable.
           </div>
           <Button
             variant="primary"
@@ -374,7 +434,7 @@ function PatientDashboard() {
         </Card>
       </div>
 
-      <div className="mt-4">
+      <div>
         <PatientSnapshotCard
           patient={patient}
           loading={patientLoading}
@@ -382,20 +442,20 @@ function PatientDashboard() {
         />
       </div>
 
-      <div className="mt-4">
-        <Card padding="lg">
+      <div>
+        <Card padding="lg" className="border-white/70 bg-white/72 shadow-[0_18px_45px_rgba(24,86,115,0.12)] backdrop-blur-xl">
           <div className="flex items-start justify-between gap-4 mb-5">
             <div>
-              <h2 className="text-sm font-semibold text-[var(--text-primary)]">
+              <h2 className="text-base font-semibold text-[#062f3d]">
                 Recent appointments
               </h2>
-              <p className="text-xs text-[var(--text-muted)] mt-1">
+              <p className="text-xs text-[#55717b] mt-1">
                 Latest activity from your appointments
               </p>
             </div>
             <Link
               href="/appointments"
-              className="text-sm font-medium text-[var(--accent)] hover:text-[var(--accent-hover)]"
+              className="text-sm font-semibold text-[#0a6792] hover:text-[#064c68]"
             >
               View all
             </Link>
@@ -409,32 +469,32 @@ function PatientDashboard() {
             <p className="py-6 text-sm text-[var(--error)]">{recentError}</p>
           ) : recentAppointments.length === 0 ? (
             <div className="py-8">
-              <p className="text-sm font-medium text-[var(--text-primary)]">
+              <p className="text-sm font-semibold text-[#062f3d]">
                 No appointments yet
               </p>
-              <p className="text-sm text-[var(--text-muted)] mt-1">
+              <p className="text-sm text-[#55717b] mt-1">
                 Book your first appointment when you are ready.
               </p>
             </div>
           ) : (
-            <div className="divide-y divide-[var(--border)]">
+            <div className="grid gap-3">
               {recentAppointments.map((appointment) => {
                 const status = STATUS_BADGE[appointment.status];
                 return (
                   <div
                     key={appointment.id}
-                    className="py-4 first:pt-0 last:pb-0 flex flex-col md:flex-row md:items-center md:justify-between gap-3"
+                    className="flex flex-col gap-3 rounded-2xl border border-[#d8edf3] bg-[#f8fcfd]/78 px-4 py-3 md:flex-row md:items-center md:justify-between"
                   >
                     <div className="min-w-0">
                       <div className="flex flex-wrap items-center gap-2">
-                        <p className="text-sm font-semibold text-[var(--text-primary)] truncate">
+                        <p className="text-sm font-semibold text-[#062f3d] truncate">
                           {appointment.doctor
                             ? `Dr. ${appointment.doctor.first_name} ${appointment.doctor.last_name}`
                             : "Doctor appointment"}
                         </p>
                         <Badge variant={status.variant}>{status.label}</Badge>
                       </div>
-                      <p className="text-xs text-[var(--text-muted)] mt-1">
+                      <p className="text-xs text-[#55717b] mt-1">
                         {appointment.doctor?.specialization ?? "Doctor"} -{" "}
                         <span className="capitalize">
                           {appointment.type.replace("_", " ")}
@@ -442,11 +502,11 @@ function PatientDashboard() {
                       </p>
                     </div>
                     <div className="md:text-right shrink-0">
-                      <p className="text-sm font-medium text-[var(--text-primary)]">
+                      <p className="text-sm font-medium text-[#062f3d]">
                         {formatDateTime(appointment.slot_time)}
                       </p>
                       {appointment.token_number && (
-                        <p className="text-xs text-[var(--text-muted)] mt-1">
+                        <p className="text-xs text-[#55717b] mt-1">
                           Token #{appointment.token_number}
                         </p>
                       )}
