@@ -238,17 +238,20 @@ export default function PatientSnapshotCard({
     !!patient?.emergency_contact_name || !!patient?.emergency_contact_phone;
 
   return (
-    <Card padding="lg" className="min-h-[300px]">
-      <div className="flex items-start justify-between gap-4 mb-6">
+    <Card padding="lg" className="min-h-[320px] overflow-hidden border-white/70 bg-white/72 shadow-[0_18px_45px_rgba(24,86,115,0.12)] backdrop-blur-xl">
+      <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
         <div>
-          <h2 className="text-sm font-semibold text-[var(--text-primary)]">
+          <div className="inline-flex rounded-full border border-[#b7d5de] bg-[#edf8fb] px-3 py-1 text-xs font-semibold text-[#0a6792]">
             Patient card
+          </div>
+          <h2 className="mt-4 text-xl font-semibold tracking-normal text-[#062f3d]">
+            Profile snapshot
           </h2>
-          <p className="text-xs text-[var(--text-muted)] mt-1">
-            Profile snapshot and medical basics
+          <p className="mt-1 text-sm text-[#55717b]">
+            Medical basics and emergency details for quick reference.
           </p>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2">
           {patient && !loading && !error && (
             <Button
               variant="outline"
@@ -273,89 +276,104 @@ export default function PatientSnapshotCard({
       </div>
 
       {loading ? (
-        <div className="flex items-center gap-2 text-sm text-[var(--text-muted)]">
+        <div className="flex items-center gap-2 rounded-2xl border border-[#d8edf3] bg-[#f8fcfd]/78 p-4 text-sm text-[#55717b]">
           <Spinner size="sm" /> Loading patient card...
         </div>
       ) : error ? (
-        <p className="text-sm text-[var(--error)]">{error}</p>
+        <p className="rounded-2xl border border-red-200 bg-[var(--error-bg)] p-4 text-sm text-[var(--error)]">{error}</p>
       ) : patient ? (
-        <div className="flex flex-col gap-5">
-          <div className="flex items-center gap-3">
-            <div className="w-12 h-12 rounded-full bg-[var(--accent-light)] flex items-center justify-center text-sm font-semibold text-[var(--accent)] shrink-0">
-              {getInitials(patient.first_name, patient.last_name)}
-            </div>
-            <div className="min-w-0">
-              <p className="text-base font-semibold text-[var(--text-primary)] truncate">
-                {fullName || "-"}
-              </p>
-              <p className="text-xs text-[var(--text-muted)] mt-0.5">
-                Patient ID: {patientCardId(patient.id)}
-              </p>
-            </div>
-          </div>
-
-          {hasBadges && (
-            <div className="flex flex-wrap gap-2">
-              {patient.blood_group && (
-                <Badge variant="accent">Blood {patient.blood_group}</Badge>
-              )}
-              {patient.gender && (
-                <Badge variant="neutral" className="capitalize">
-                  {patient.gender.replaceAll("_", " ")}
-                </Badge>
-              )}
-              {age !== null && <Badge variant="neutral">{age} years</Badge>}
-            </div>
-          )}
-
-          {details.length > 0 && (
-            <div className="grid grid-cols-2 gap-3">
-              {details.map((item) => (
-                <div key={item.label}>
-                  <p className="text-xs text-[var(--text-muted)]">{item.label}</p>
-                  <p className="text-sm font-medium text-[var(--text-primary)] mt-0.5 truncate">
-                    {displayValue(item.value)}
-                  </p>
-                </div>
-              ))}
-            </div>
-          )}
-
-          {medicalDetails.length > 0 && (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-3 pt-1">
-              {medicalDetails.map((item) => (
-                <div key={item.label}>
-                  <p className="text-xs text-[var(--text-muted)]">{item.label}</p>
-                  <p className="text-sm text-[var(--text-primary)] mt-0.5 line-clamp-2">
-                    {displayValue(item.value)}
-                  </p>
-                </div>
-              ))}
-            </div>
-          )}
-
-          {hasEmergencyContact && (
-            <div className="pt-4 border-t border-[var(--border)]">
-              <p className="text-xs text-[var(--text-muted)]">Emergency contact</p>
-              {patient.emergency_contact_name && (
-                <p className="text-sm font-medium text-[var(--text-primary)] mt-0.5">
-                  {patient.emergency_contact_name}
+        <div className="grid gap-5 lg:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)]">
+          <section className="rounded-[24px] border border-[#d8edf3] bg-[#dceff5]/70 p-5 text-[#062f3d] shadow-sm backdrop-blur-xl">
+            <div className="flex items-center gap-3">
+              <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-[#0a6792] text-base font-semibold text-[#eaf8fb]">
+                {getInitials(patient.first_name, patient.last_name)}
+              </div>
+              <div className="min-w-0">
+                <p className="truncate text-lg font-semibold">
+                  {fullName || "-"}
                 </p>
-              )}
-              {patient.emergency_contact_phone && (
-                <p className="text-xs text-[var(--text-muted)] mt-0.5">
-                  {formatPhone(patient.emergency_contact_phone)}
+                <p className="mt-1 break-all text-xs font-medium text-[#456773]">
+                  ID: {patientCardId(patient.id)}
                 </p>
-              )}
+              </div>
             </div>
-          )}
+
+            {hasBadges && (
+              <div className="mt-5 flex flex-wrap gap-2">
+                {patient.blood_group && (
+                  <Badge variant="accent">Blood {patient.blood_group}</Badge>
+                )}
+                {patient.gender && (
+                  <Badge variant="neutral" className="capitalize">
+                    {patient.gender.replaceAll("_", " ")}
+                  </Badge>
+                )}
+                {age !== null && <Badge variant="neutral">{age} years</Badge>}
+              </div>
+            )}
+
+            {hasEmergencyContact && (
+              <div className="mt-5 rounded-2xl border border-white/65 bg-white/48 px-4 py-3 backdrop-blur-xl">
+                <p className="text-xs font-medium text-[#55717b]">Emergency contact</p>
+                {patient.emergency_contact_name && (
+                  <p className="mt-1 text-sm font-semibold text-[#062f3d]">
+                    {patient.emergency_contact_name}
+                  </p>
+                )}
+                {patient.emergency_contact_phone && (
+                  <p className="mt-0.5 text-xs text-[#55717b]">
+                    {formatPhone(patient.emergency_contact_phone)}
+                  </p>
+                )}
+              </div>
+            )}
+          </section>
+
+          <section className="flex flex-col gap-4">
+            {details.length > 0 && (
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                {details.map((item) => (
+                  <div key={item.label} className="rounded-2xl border border-[#d8edf3] bg-[#f8fcfd]/78 px-4 py-3">
+                    <p className="text-xs font-medium text-[#55717b]">{item.label}</p>
+                    <p className="mt-1 truncate text-sm font-semibold text-[#062f3d]">
+                      {displayValue(item.value)}
+                    </p>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {medicalDetails.length > 0 && (
+              <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
+                {medicalDetails.map((item) => (
+                  <div key={item.label} className="rounded-2xl border border-[#d8edf3] bg-[#f8fcfd]/78 px-4 py-3">
+                    <p className="text-xs font-medium text-[#55717b]">{item.label}</p>
+                    <p className="mt-1 line-clamp-2 text-sm text-[#062f3d]">
+                      {displayValue(item.value)}
+                    </p>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {details.length === 0 && medicalDetails.length === 0 && !hasEmergencyContact && (
+              <div className="rounded-2xl border border-[#d8edf3] bg-[#f8fcfd]/78 px-4 py-5">
+                <p className="text-sm font-semibold text-[#062f3d]">
+                  Add optional profile details
+                </p>
+                <p className="mt-1 text-sm text-[#55717b]">
+                  Blood group, city, allergies, and emergency contact will appear here once saved.
+                </p>
+              </div>
+            )}
+          </section>
         </div>
       ) : (
-        <div className="flex flex-col gap-3">
-          <p className="text-sm font-medium text-[var(--text-primary)]">
+        <div className="rounded-2xl border border-[#d8edf3] bg-[#f8fcfd]/78 p-4">
+          <p className="text-sm font-semibold text-[#062f3d]">
             Patient profile not found
           </p>
-          <p className="text-sm text-[var(--text-muted)]">
+          <p className="mt-1 text-sm text-[#55717b]">
             Complete your profile to generate the card snapshot.
           </p>
         </div>

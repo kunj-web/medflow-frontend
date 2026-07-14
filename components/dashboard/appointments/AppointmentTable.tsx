@@ -51,7 +51,7 @@ export default function AppointmentTable({
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center py-20 gap-2 text-sm text-[var(--text-muted)]">
+      <div className="flex items-center justify-center gap-2 py-20 text-sm text-[#55717b]">
         <Spinner size="sm" /> Loading appointments…
       </div>
     );
@@ -60,15 +60,15 @@ export default function AppointmentTable({
   if (rows.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center py-20 gap-3 text-center">
-        <div className="w-10 h-10 rounded-full bg-[var(--gray-100)] flex items-center justify-center text-[var(--text-muted)]">
+        <div className="flex h-12 w-12 items-center justify-center rounded-2xl border border-[#d8edf3] bg-[#edf8fb] text-[#0a6792]">
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round">
             <rect x="3" y="4" width="18" height="18" rx="2"/>
             <path d="M16 2v4M8 2v4M3 10h18"/>
           </svg>
         </div>
         <div>
-          <p className="text-sm font-medium text-[var(--text-primary)]">No appointments found</p>
-          <p className="text-xs text-[var(--text-muted)] mt-1">
+          <p className="text-sm font-semibold text-[#062f3d]">No appointments found</p>
+          <p className="text-xs text-[#55717b] mt-1">
             Try adjusting the filters or book a new appointment.
           </p>
         </div>
@@ -82,11 +82,11 @@ export default function AppointmentTable({
       <div className="overflow-x-auto">
         <table className="w-full text-sm">
           <thead>
-            <tr className="border-b border-[var(--border)] bg-[var(--gray-50)]">
+            <tr className="border-b border-[#d8edf3] bg-[#edf8fb]/70">
               {["Token", "Patient", "Doctor", "Date & Time", "Type", "Status", ""].map((h) => (
                 <th
                   key={h}
-                  className="px-4 py-3 text-left text-xs font-semibold text-[var(--text-muted)] uppercase tracking-wide whitespace-nowrap first:pl-5 last:pr-5"
+                  className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-[#55717b] whitespace-nowrap first:pl-5 last:pr-5"
                 >
                   {h}
                 </th>
@@ -105,13 +105,13 @@ export default function AppointmentTable({
                 <Fragment key={appt.id}>
                 <tr
                   className={cn(
-                    "border-b border-[var(--border)] hover:bg-[var(--gray-50)] transition-colors",
+                    "border-b border-[#d8edf3] transition-colors hover:bg-[#f8fcfd]",
                     i === rows.length - 1 && !appt.cancellation_reason && "border-b-0"
                   )}
                 >
                   {/* Token */}
                   <td className="px-4 py-3 pl-5">
-                    <span className="font-mono text-xs font-semibold text-[var(--text-secondary)]">
+                    <span className="rounded-full border border-[#d8edf3] bg-[#f8fcfd] px-2 py-1 font-mono text-xs font-semibold text-[#0a6792]">
                       #{appt.token_number}
                     </span>
                   </td>
@@ -120,13 +120,13 @@ export default function AppointmentTable({
                   <td className="px-4 py-3">
                     {appt.patient ? (
                       <div>
-                        <p className="font-medium text-[var(--text-primary)] whitespace-nowrap">
+                        <p className="font-semibold text-[#062f3d] whitespace-nowrap">
                           {appt.patient.first_name} {appt.patient.last_name}
                         </p>
-                        <p className="text-xs text-[var(--text-muted)]">{appt.patient.phone}</p>
+                        <p className="text-xs text-[#55717b]">{appt.patient.phone}</p>
                       </div>
                     ) : (
-                      <span className="text-[var(--text-muted)]">—</span>
+                      <span className="text-[#55717b]">-</span>
                     )}
                   </td>
 
@@ -134,24 +134,24 @@ export default function AppointmentTable({
                   <td className="px-4 py-3">
                     {appt.doctor ? (
                       <div>
-                        <p className="font-medium text-[var(--text-primary)] whitespace-nowrap">
+                        <p className="font-semibold text-[#062f3d] whitespace-nowrap">
                           Dr. {appt.doctor.first_name} {appt.doctor.last_name}
                         </p>
-                        <p className="text-xs text-[var(--text-muted)]">{appt.doctor.specialization}</p>
+                        <p className="text-xs text-[#55717b]">{appt.doctor.specialization}</p>
                       </div>
                     ) : (
-                      <span className="text-[var(--text-muted)]">—</span>
+                      <span className="text-[#55717b]">-</span>
                     )}
                   </td>
 
                   {/* Date & Time */}
-                  <td className="px-4 py-3 whitespace-nowrap font-mono text-xs text-[var(--text-secondary)]">
+                  <td className="px-4 py-3 whitespace-nowrap font-mono text-xs text-[#456773]">
                     {formatDateTime(appt.slot_time)}
                   </td>
 
                   {/* Type */}
                   <td className="px-4 py-3">
-                    <span className="text-xs text-[var(--text-secondary)]">
+                    <span className="text-xs capitalize text-[#55717b]">
                       {appt.type === AppointmentType.CONSULTATION ? "Consultation" : appt.type.replace("_", " ")}
                     </span>
                   </td>
@@ -175,7 +175,7 @@ export default function AppointmentTable({
                     )}
                     {canCancel && patientCancellationClosed && (
                       <span
-                        className="text-xs text-[var(--text-muted)] whitespace-nowrap"
+                        className="text-xs text-[#55717b] whitespace-nowrap"
                         title="Appointments cannot be cancelled on the appointment day."
                       >
                         Cancellation closed
@@ -186,7 +186,7 @@ export default function AppointmentTable({
                 {appt.status === AppointmentStatus.CANCELLED && appt.cancellation_reason && (
                   <tr
                     className={cn(
-                      "border-b border-[var(--border)] bg-[var(--error-bg)]/40",
+                      "border-b border-red-200 bg-[var(--error-bg)]/50",
                       i === rows.length - 1 && "border-b-0"
                     )}
                   >
@@ -195,7 +195,7 @@ export default function AppointmentTable({
                         <span className="font-semibold text-[var(--error)] whitespace-nowrap">
                           Cancellation reason:
                         </span>
-                        <span className="text-[var(--text-secondary)]">
+                        <span className="text-[#55717b]">
                           {appt.cancellation_reason}
                         </span>
                       </div>
@@ -211,8 +211,8 @@ export default function AppointmentTable({
 
       {/* Pagination */}
       {totalPages > 1 && (
-        <div className="flex items-center justify-between px-5 py-3 border-t border-[var(--border)] bg-[var(--gray-50)]">
-          <p className="text-xs text-[var(--text-muted)]">
+        <div className="flex items-center justify-between border-t border-[#d8edf3] bg-[#f8fcfd]/70 px-5 py-3">
+          <p className="text-xs text-[#55717b]">
             Page {currentPage} of {totalPages}
           </p>
           <div className="flex items-center gap-1">
@@ -222,7 +222,7 @@ export default function AppointmentTable({
               disabled={currentPage <= 1}
               onClick={() => onPageChange(currentPage - 1)}
             >
-              ← Prev
+              Prev
             </Button>
             <Button
               variant="ghost"
@@ -230,7 +230,7 @@ export default function AppointmentTable({
               disabled={currentPage >= totalPages}
               onClick={() => onPageChange(currentPage + 1)}
             >
-              Next →
+              Next
             </Button>
           </div>
         </div>
