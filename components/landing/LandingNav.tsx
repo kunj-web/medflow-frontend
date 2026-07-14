@@ -2,7 +2,6 @@
 
 import Link from "next/link";
 import { useState } from "react";
-import Button from "@/components/ui/Button";
 import { cn } from "@/lib/utils";
 
 export default function LandingNav() {
@@ -49,23 +48,17 @@ export default function LandingNav() {
 
         {/* CTA */}
         <div className="hidden md:flex items-center gap-3">
-          <Link href="/register">
-            <Button
-              variant="ghost"
-              size="sm"
-              className="h-11 rounded-full px-5 text-[#052f3a] hover:bg-[#e7f5f7]"
-            >
-              Sign up
-            </Button>
+          <Link
+            href="/register"
+            className="inline-flex h-11 items-center justify-center rounded-full px-5 text-sm font-medium text-[#052f3a] transition-colors hover:bg-[#e7f5f7]"
+          >
+            Sign up
           </Link>
-          <Link href="/login">
-            <Button
-              variant="primary"
-              size="sm"
-              className="h-11 rounded-full border border-[#80c3cf]/70 bg-[#c8eee6]/75 px-5 text-[#052f3a] hover:bg-[#b9e7df]"
-            >
-              Login
-            </Button>
+          <Link
+            href="/login"
+            className="inline-flex h-11 items-center justify-center rounded-full border border-[#80c3cf]/70 bg-[#c8eee6]/75 px-5 text-sm font-medium text-[#052f3a] transition-colors hover:bg-[#b9e7df]"
+          >
+            Login
           </Link>
         </div>
 
@@ -99,15 +92,19 @@ export default function LandingNav() {
           <a href="/appointments" className="text-sm text-[#052f3a] py-2" onClick={() => setMobileOpen(false)}>Appointments</a>
           <a href="#contact" className="text-sm text-[#052f3a] py-2" onClick={() => setMobileOpen(false)}>Contact</a>
           <div className="pt-2 border-t border-[var(--border)] flex flex-col gap-2">
-            <Link href="/register" onClick={() => setMobileOpen(false)}>
-              <Button variant="outline" size="md" className="w-full rounded-full">
-                Sign up
-              </Button>
+            <Link
+              href="/register"
+              onClick={() => setMobileOpen(false)}
+              className="inline-flex h-10 w-full items-center justify-center rounded-full border border-[var(--border-strong)] bg-white/45 text-sm font-medium text-[#052f3a] transition-colors hover:bg-white/70"
+            >
+              Sign up
             </Link>
-            <Link href="/login" onClick={() => setMobileOpen(false)}>
-              <Button variant="primary" size="md" className="w-full rounded-full bg-[#18b7ae] hover:bg-[#109d97]">
-                Login
-              </Button>
+            <Link
+              href="/login"
+              onClick={() => setMobileOpen(false)}
+              className="inline-flex h-10 w-full items-center justify-center rounded-full border border-[#80c3cf]/70 bg-[#c8eee6]/75 text-sm font-medium text-[#052f3a] transition-colors hover:bg-[#b9e7df]"
+            >
+              Login
             </Link>
           </div>
         </nav>

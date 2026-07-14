@@ -194,20 +194,19 @@ export default function RegisterForm() {
 
   if (success) {
     return (
-      <div className="min-h-screen bg-[var(--gray-50)] flex items-center justify-center px-4">
-        <div className="w-full max-w-md">
-          <div className="text-center mb-8">
-            <Link href="/" className="inline-flex items-center gap-2 mb-6">
-              <div className="w-9 h-9 rounded-[var(--radius-md)] bg-[var(--accent)] flex items-center justify-center">
-                <svg width="18" height="18" viewBox="0 0 16 16" fill="none">
-                  <path d="M8 2v4M8 10v4M2 8h4M10 8h4" stroke="white" strokeWidth="2" strokeLinecap="round"/>
-                </svg>
-              </div>
-              <span className="font-semibold text-[var(--text-primary)] text-lg tracking-tight">MedFlow</span>
-            </Link>
-          </div>
+      <div className="min-h-screen bg-[#dceff5] px-4 py-8">
+        <div className="mx-auto flex min-h-[calc(100vh-4rem)] w-full max-w-3xl items-center justify-center">
+          <div className="w-full rounded-[30px] border border-white/65 bg-white/68 p-5 shadow-[0_24px_70px_rgba(24,86,115,0.16)] backdrop-blur-2xl sm:p-8">
+            <div className="mb-8 text-center">
+              <Link href="/" className="inline-flex items-center gap-2 rounded-full border border-white/70 bg-white/70 px-3 py-2 shadow-sm backdrop-blur-xl transition-colors hover:bg-white">
+                <div className="flex h-8 w-8 items-center justify-center rounded-full bg-[#0a6792] text-sm font-semibold text-[#eaf8fb]">
+                  M
+                </div>
+                <span className="text-sm font-semibold tracking-tight text-[#062f3d]">MedFlow</span>
+              </Link>
+            </div>
 
-          <div className="card p-6 flex flex-col gap-5">
+            <div className="flex flex-col gap-5 rounded-[24px] border border-white/70 bg-white/75 p-6 shadow-[0_18px_45px_rgba(24,86,115,0.12)] backdrop-blur-xl">
             <div className="flex flex-col items-center text-center gap-3">
               <div className="w-12 h-12 rounded-full flex items-center justify-center" style={{ background: "var(--success-bg)" }}>
                 <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" style={{ color: "var(--success)" }}>
@@ -222,11 +221,10 @@ export default function RegisterForm() {
               </div>
             </div>
 
-            <Link href="/login">
-              <Button variant="primary" size="lg" className="w-full">
+            <Link href="/login" className="inline-flex h-11 w-full items-center justify-center rounded-[var(--radius-md)] bg-[var(--accent)] px-6 text-base font-medium text-white shadow-sm transition-colors hover:bg-[var(--accent-hover)]">
                 Continue to login
-              </Button>
             </Link>
+            </div>
           </div>
         </div>
       </div>
@@ -234,26 +232,56 @@ export default function RegisterForm() {
   }
 
   return (
-    <div className="min-h-screen bg-[var(--gray-50)] flex items-center justify-center px-4 py-8">
-      <div className="w-full max-w-xl">
-        <div className="text-center mb-8">
-          <Link href="/" className="inline-flex items-center gap-2 mb-6 group">
-            <div className="w-9 h-9 rounded-[var(--radius-md)] bg-[var(--accent)] flex items-center justify-center">
-              <svg width="18" height="18" viewBox="0 0 16 16" fill="none">
-                <path d="M8 2v4M8 10v4M2 8h4M10 8h4" stroke="white" strokeWidth="2" strokeLinecap="round"/>
-              </svg>
+    <div className="min-h-screen bg-[#dceff5] px-4 py-8">
+      <div className="mx-auto grid min-h-[calc(100vh-4rem)] w-full max-w-6xl items-center gap-6 lg:grid-cols-[0.78fr_1fr]">
+        <aside className="hidden h-full min-h-[680px] flex-col justify-between rounded-[30px] border border-white/60 bg-[#b9dbe8]/70 p-8 text-[#062f3d] shadow-[0_24px_70px_rgba(24,86,115,0.12)] backdrop-blur-2xl lg:flex">
+          <Link href="/" className="inline-flex items-center gap-3">
+            <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-[#0a6792]/90 text-base font-semibold text-[#eaf8fb]">
+              M
             </div>
-            <span className="font-semibold text-[var(--text-primary)] text-lg tracking-tight">MedFlow</span>
+            <span className="text-xl font-semibold tracking-tight">MedFlow</span>
           </Link>
-          <h1 className="text-xl font-semibold text-[var(--text-primary)] mb-1">
-            Create your account
-          </h1>
-          <p className="text-sm text-[var(--text-muted)]">
-            Patients can log in after registration; doctors are reviewed before access.
-          </p>
-        </div>
+          <div className="space-y-5">
+            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[#24708a]">
+              Account setup
+            </p>
+            <h2 className="max-w-sm text-4xl font-semibold leading-tight tracking-tight">
+              Start with the right role for your care workflow.
+            </h2>
+            <p className="max-w-sm text-sm leading-6 text-[#315866]">
+              Patients get instant dashboard access. Doctors can submit profile details for review before they start managing schedules.
+            </p>
+          </div>
+          <div className="grid gap-3">
+            {[
+              "Patient appointment booking",
+              "Doctor approval flow",
+              "Hospital and clinic profiles",
+            ].map((item) => (
+              <div key={item} className="rounded-2xl border border-white/55 bg-white/45 px-4 py-3 text-sm font-medium shadow-sm backdrop-blur-xl">
+                {item}
+              </div>
+            ))}
+          </div>
+        </aside>
 
-        <div className="card p-6">
+        <main className="rounded-[30px] border border-white/65 bg-white/62 p-5 shadow-[0_24px_70px_rgba(24,86,115,0.16)] backdrop-blur-2xl sm:p-8">
+          <div className="mb-8 text-center">
+            <Link href="/" className="mb-6 inline-flex items-center gap-2 rounded-full border border-white/70 bg-white/70 px-3 py-2 shadow-sm backdrop-blur-xl transition-colors hover:bg-white">
+              <div className="flex h-8 w-8 items-center justify-center rounded-full bg-[#0a6792] text-sm font-semibold text-[#eaf8fb]">
+                M
+              </div>
+              <span className="text-sm font-semibold tracking-tight text-[#062f3d]">MedFlow</span>
+            </Link>
+            <h1 className="text-2xl font-semibold tracking-tight text-[#062f3d]">
+              Create your account
+            </h1>
+            <p className="mt-2 text-sm text-[#55717b]">
+              Patients can log in after registration; doctors are reviewed before access.
+            </p>
+          </div>
+
+          <div className="rounded-[24px] border border-white/70 bg-white/74 p-5 shadow-[0_18px_45px_rgba(24,86,115,0.12)] backdrop-blur-xl sm:p-6">
           {globalError && (
             <div className="mb-5 px-4 py-3 rounded-[var(--radius-md)] bg-[var(--error-bg)] border border-red-200 flex items-start gap-3">
               <svg className="w-4 h-4 mt-0.5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" style={{ color: "var(--error)" }}>
@@ -410,14 +438,15 @@ export default function RegisterForm() {
               {loading ? "Creating account..." : "Create account"}
             </Button>
           </form>
-        </div>
+          </div>
 
-        <p className="text-center text-xs text-[var(--text-muted)] mt-6">
+          <p className="mt-6 text-center text-xs text-[#55717b]">
           Already have an account?{" "}
-          <Link href="/login" className="font-medium hover:text-[var(--text-secondary)] transition-colors" style={{ color: "var(--accent)" }}>
+          <Link href="/login" className="font-semibold text-[#0a6792] transition-colors hover:text-[#064c68]">
             Log in
           </Link>
-        </p>
+          </p>
+        </main>
       </div>
     </div>
   );

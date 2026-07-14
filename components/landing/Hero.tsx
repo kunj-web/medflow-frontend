@@ -73,12 +73,12 @@ export default function Hero() {
           <div className="absolute bottom-0 left-[50%] hidden h-[58%] w-[34%] -translate-x-2 rounded-tl-[120px] bg-[#b9ddf1]/78 md:block" />
         </div>
 
-        <div className="relative z-20 -mt-20 grid gap-4 px-5 sm:grid-cols-3 md:max-w-[610px] md:px-9">
+        <div className="relative z-20 mt-5 grid gap-4 px-5 sm:grid-cols-3 md:mt-6 md:max-w-[610px] md:px-9">
           {SERVICE_CARDS.map((card, index) => (
             <Link
               key={card.title}
               href={index === 0 ? "/appointments" : "/dashboard"}
-                className={`${card.bg} group flex min-h-[150px] flex-col justify-between rounded-[16px] border border-white/50 bg-opacity-75 p-5 text-[#052f3a] shadow-[0_16px_38px_rgba(6,68,88,0.14)] backdrop-blur-xl transition-transform duration-200 hover:-translate-y-1`}
+              className={`${card.bg} group flex min-h-[150px] flex-col justify-between rounded-[16px] border border-white/50 bg-opacity-75 p-5 text-[#052f3a] shadow-[0_16px_38px_rgba(6,68,88,0.14)] backdrop-blur-xl transition-transform duration-200 hover:-translate-y-1`}
             >
               <div>{card.icon}</div>
               <div className="flex items-end justify-between gap-3">
