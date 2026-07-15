@@ -120,18 +120,35 @@ export default function PatientsPage() {
     if (total > 0) return `${total} patient${total === 1 ? "" : "s"} found`;
     return "Search and review patient records";
   }, [isDoctor, total]);
+  const patientStats = [
+    {
+      label: "Shown",
+      value: patients.length,
+      tone: "bg-[#d9edbd]/80",
+    },
+    {
+      label: "Total",
+      value: total,
+      tone: "bg-[#bfe0f2]/80",
+    },
+    {
+      label: "Profiles",
+      value: patients.filter((patient) => patient.blood_group || patient.date_of_birth || patient.existing_conditions || patient.allergies).length,
+      tone: "bg-[#ffc2dc]/75",
+    },
+  ];
 
   if (loaded && isDoctor && !isAdmin) {
     return (
-      <div>
+      <div className="flex flex-col gap-7">
         <PageHeader title="Patients" subtitle={subtitle} />
-        <Card padding="lg" className="flex flex-col items-center justify-center py-20 gap-3 text-center">
-          <div className="w-12 h-12 rounded-full bg-[var(--accent-light)] flex items-center justify-center text-[var(--accent)]">
+        <Card padding="lg" className="flex flex-col items-center justify-center gap-3 border-white/70 bg-white/72 py-20 text-center shadow-[0_18px_45px_rgba(24,86,115,0.12)] backdrop-blur-xl">
+          <div className="flex h-12 w-12 items-center justify-center rounded-2xl border border-[#d8edf3] bg-[#edf8fb] text-[#0a6792]">
             <UserRound size={22} />
           </div>
           <div>
-            <p className="text-sm font-semibold text-[var(--text-primary)]">Patient list is admin-only</p>
-            <p className="text-xs text-[var(--text-muted)] mt-1 max-w-sm">
+            <p className="text-sm font-semibold text-[#062f3d]">Patient list is admin-only</p>
+            <p className="text-xs text-[#55717b] mt-1 max-w-sm">
               Doctors can view patient information from appointments they are assigned to.
             </p>
           </div>
@@ -141,7 +158,7 @@ export default function PatientsPage() {
   }
 
   return (
-    <div>
+    <div className="flex flex-col gap-7">
       <PageHeader
         title="Patients"
         subtitle={subtitle}
@@ -152,39 +169,85 @@ export default function PatientsPage() {
         }
       />
 
-      <Card padding="none">
-        <div className="flex flex-col gap-3 px-5 py-4 border-b border-[var(--border)] sm:flex-row sm:items-center">
+      <section className="overflow-hidden rounded-[28px] border border-white/65 bg-[#dceff5]/80 p-5 shadow-[0_20px_60px_rgba(24,86,115,0.12)] backdrop-blur-2xl sm:p-6">
+        <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_360px] lg:items-end">
+          <div>
+            <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[#24708a]">
+              Admin patient directory
+            </p>
+            <h2 className="mt-3 max-w-2xl text-3xl font-semibold tracking-normal text-[#062f3d] sm:text-4xl">
+              Search patient records and review care history.
+            </h2>
+            <p className="mt-3 max-w-xl text-sm leading-6 text-[#456773]">
+              Find patients by name or phone, inspect their profile details, and
+              review recent appointment history from one place.
+            </p>
+          </div>
+          <div className="grid grid-cols-3 gap-3">
+            {patientStats.map((item) => (
+              <div
+                key={item.label}
+                className={`${item.tone} rounded-2xl border border-white/60 px-3 py-4 text-[#062f3d] shadow-sm backdrop-blur-xl`}
+              >
+                <p className="text-2xl font-semibold leading-none">
+                  {loading ? "..." : item.value}
+                </p>
+                <p className="mt-2 text-xs font-medium text-[#456773]">
+                  {item.label}
+                </p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      <Card padding="none" className="overflow-hidden border-white/70 bg-white/72 shadow-[0_18px_45px_rgba(24,86,115,0.12)] backdrop-blur-xl">
+        <div className="border-b border-[#d8edf3] bg-[#f8fcfd]/70 px-5 py-4">
+          <div className="mb-4 flex flex-col gap-1 sm:flex-row sm:items-end sm:justify-between">
+            <div>
+              <h2 className="text-xl font-semibold tracking-normal text-[#062f3d]">
+                Patient list
+              </h2>
+              <p className="mt-1 text-sm text-[#55717b]">
+                Search and open a patient profile drawer.
+              </p>
+            </div>
+          </div>
+
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
           <div className="w-full sm:max-w-sm">
             <Input
               value={search}
               onChange={(event) => setSearch(event.target.value)}
               placeholder="Search name or phone"
               leftAddon={<Search size={15} />}
+              className="rounded-full border-[#d8edf3] bg-white/80 text-[#062f3d] focus:border-[#0a6792] focus:ring-[#0a6792]"
             />
           </div>
-          <p className="text-xs text-[var(--text-muted)] sm:ml-auto">
+          <p className="text-xs text-[#55717b] sm:ml-auto">
             {loading ? "Loading..." : `${patients.length} shown`}
           </p>
         </div>
+        </div>
 
         {error && (
-          <div className="px-5 py-3 bg-[var(--error-bg)] border-b border-red-200">
+          <div className="border-b border-red-200 bg-[var(--error-bg)] px-5 py-3">
             <p className="text-sm text-[var(--error)]">{error}</p>
           </div>
         )}
 
         {loading ? (
-          <div className="flex items-center justify-center py-20 gap-2 text-sm text-[var(--text-muted)]">
+          <div className="flex items-center justify-center py-20 gap-2 text-sm text-[#55717b]">
             <Spinner size="sm" /> Loading patients...
           </div>
         ) : patients.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-20 gap-3 text-center">
-            <div className="w-10 h-10 rounded-full bg-[var(--gray-100)] flex items-center justify-center text-[var(--text-muted)]">
+            <div className="flex h-12 w-12 items-center justify-center rounded-2xl border border-[#d8edf3] bg-[#edf8fb] text-[#0a6792]">
               <UserRound size={18} />
             </div>
             <div>
-              <p className="text-sm font-medium text-[var(--text-primary)]">No patients found</p>
-              <p className="text-xs text-[var(--text-muted)] mt-1">
+              <p className="text-sm font-semibold text-[#062f3d]">No patients found</p>
+              <p className="text-xs text-[#55717b] mt-1">
                 Try a different name or phone search.
               </p>
             </div>
@@ -193,11 +256,11 @@ export default function PatientsPage() {
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
-                <tr className="border-b border-[var(--border)] bg-[var(--gray-50)]">
+                <tr className="border-b border-[#d8edf3] bg-[#edf8fb]/70">
                   {["Patient", "Contact", "DOB", "Blood", "Medical", ""].map((header) => (
                     <th
                       key={header}
-                      className="px-4 py-3 text-left text-xs font-semibold text-[var(--text-muted)] uppercase tracking-wide whitespace-nowrap first:pl-5 last:pr-5"
+                      className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-[#55717b] whitespace-nowrap first:pl-5 last:pr-5"
                     >
                       {header}
                     </th>
@@ -209,45 +272,45 @@ export default function PatientsPage() {
                   <tr
                     key={patient.id}
                     className={cn(
-                      "border-b border-[var(--border)] hover:bg-[var(--gray-50)] transition-colors",
+                      "border-b border-[#d8edf3] transition-colors hover:bg-[#f8fcfd]",
                       index === patients.length - 1 && "border-b-0"
                     )}
                   >
                     <td className="px-4 py-3 pl-5">
                       <div className="flex items-center gap-3">
-                        <div className="w-8 h-8 rounded-full bg-[var(--accent-light)] text-[var(--accent)] flex items-center justify-center text-xs font-semibold">
+                        <div className="flex h-9 w-9 items-center justify-center rounded-2xl bg-[#0a6792] text-xs font-semibold text-[#eaf8fb]">
                           {getInitials(patient.first_name, patient.last_name)}
                         </div>
                         <div>
-                          <p className="font-medium text-[var(--text-primary)] whitespace-nowrap">
+                          <p className="font-semibold text-[#062f3d] whitespace-nowrap">
                             {patient.first_name} {patient.last_name}
                           </p>
-                          <p className="text-xs text-[var(--text-muted)]">{patient.gender ?? "Gender not set"}</p>
+                          <p className="text-xs text-[#55717b]">{patient.gender ?? "Gender not set"}</p>
                         </div>
                       </div>
                     </td>
                     <td className="px-4 py-3">
                       <div className="flex flex-col gap-1">
                         {patient.phone && (
-                          <span className="inline-flex items-center gap-1.5 text-xs text-[var(--text-secondary)]">
+                            <span className="inline-flex items-center gap-1.5 text-xs text-[#456773]">
                             <Phone size={13} /> {formatPhone(patient.phone)}
                           </span>
                         )}
                         {patient.email && (
-                          <span className="inline-flex items-center gap-1.5 text-xs text-[var(--text-muted)]">
+                            <span className="inline-flex items-center gap-1.5 text-xs text-[#55717b]">
                             <Mail size={13} /> {patient.email}
                           </span>
                         )}
                       </div>
                     </td>
-                    <td className="px-4 py-3 text-xs text-[var(--text-secondary)] whitespace-nowrap">
+                    <td className="px-4 py-3 text-xs text-[#456773] whitespace-nowrap">
                       {patient.date_of_birth ? formatDate(patient.date_of_birth) : "-"}
                     </td>
                     <td className="px-4 py-3">
-                      {patient.blood_group ? <Badge variant="neutral">{patient.blood_group}</Badge> : <span className="text-xs text-[var(--text-muted)]">-</span>}
+                      {patient.blood_group ? <Badge variant="neutral">{patient.blood_group}</Badge> : <span className="text-xs text-[#55717b]">-</span>}
                     </td>
                     <td className="px-4 py-3 max-w-xs">
-                      <p className="text-xs text-[var(--text-secondary)] truncate">
+                      <p className="text-xs text-[#55717b] truncate">
                         {patient.existing_conditions || patient.allergies || "No notes"}
                       </p>
                     </td>
@@ -264,8 +327,8 @@ export default function PatientsPage() {
         )}
 
         {totalPages > 1 && (
-          <div className="flex items-center justify-between px-5 py-3 border-t border-[var(--border)] bg-[var(--gray-50)]">
-            <p className="text-xs text-[var(--text-muted)]">
+          <div className="flex items-center justify-between border-t border-[#d8edf3] bg-[#f8fcfd]/70 px-5 py-3">
+            <p className="text-xs text-[#55717b]">
               Page {page} of {totalPages}
             </p>
             <div className="flex items-center gap-1">
@@ -281,27 +344,30 @@ export default function PatientsPage() {
       </Card>
 
       {selectedPatient && (
-        <div className="fixed inset-0 z-50 flex justify-end bg-black/30" onClick={(event) => event.target === event.currentTarget && setSelectedPatient(null)}>
-          <aside className="h-full w-full max-w-xl bg-white shadow-lg flex flex-col">
-            <div className="flex items-start justify-between gap-4 px-6 py-5 border-b border-[var(--border)]">
+        <div className="fixed inset-0 z-50 flex justify-end bg-black/35 backdrop-blur-sm" onClick={(event) => event.target === event.currentTarget && setSelectedPatient(null)}>
+          <aside className="flex h-full w-full max-w-xl flex-col border-l border-white/60 bg-white/82 shadow-[0_24px_70px_rgba(24,86,115,0.22)] backdrop-blur-2xl">
+            <div className="flex items-start justify-between gap-4 border-b border-[#d8edf3] px-6 py-5">
               <div>
-                <h2 className="text-base font-semibold text-[var(--text-primary)]">
+                <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[#24708a]">
+                  Patient profile
+                </p>
+                <h2 className="mt-2 text-xl font-semibold text-[#062f3d]">
                   {selectedPatient.first_name} {selectedPatient.last_name}
                 </h2>
-                <p className="text-sm text-[var(--text-muted)] mt-0.5">Patient profile and appointment history</p>
+                <p className="mt-1 text-sm text-[#55717b]">Profile details and appointment history</p>
               </div>
               <button
                 onClick={() => setSelectedPatient(null)}
-                className="w-8 h-8 rounded-[var(--radius-md)] flex items-center justify-center text-[var(--text-muted)] hover:bg-[var(--gray-100)] hover:text-[var(--text-primary)]"
+                className="flex h-8 w-8 items-center justify-center rounded-2xl text-[#55717b] transition-colors hover:bg-[#edf8fb] hover:text-[#062f3d]"
                 aria-label="Close patient detail"
               >
                 <X size={16} />
               </button>
             </div>
 
-            <div className="flex-1 overflow-y-auto px-6 py-5 flex flex-col gap-5">
+            <div className="flex flex-1 flex-col gap-5 overflow-y-auto px-6 py-5">
               {detailError && (
-                <div className="px-4 py-3 rounded-[var(--radius-md)] bg-[var(--error-bg)] text-sm text-[var(--error)]">
+                <div className="rounded-2xl border border-red-200 bg-[var(--error-bg)] px-4 py-3 text-sm text-[var(--error)]">
                   {detailError}
                 </div>
               )}
@@ -317,29 +383,29 @@ export default function PatientsPage() {
 
               <div>
                 <div className="flex items-center gap-2 mb-3">
-                  <CalendarClock size={16} className="text-[var(--text-muted)]" />
-                  <h3 className="text-sm font-semibold text-[var(--text-primary)]">Appointments</h3>
+                  <CalendarClock size={16} className="text-[#55717b]" />
+                  <h3 className="text-sm font-semibold text-[#062f3d]">Appointments</h3>
                 </div>
 
                 {detailLoading ? (
-                  <div className="flex items-center justify-center py-12 gap-2 text-sm text-[var(--text-muted)]">
+                  <div className="flex items-center justify-center py-12 gap-2 text-sm text-[#55717b]">
                     <Spinner size="sm" /> Loading history...
                   </div>
                 ) : appointments.length === 0 ? (
-                  <div className="py-10 text-center text-sm text-[var(--text-muted)] border border-[var(--border)] rounded-[var(--radius-md)]">
+                  <div className="rounded-2xl border border-[#d8edf3] bg-[#f8fcfd]/78 py-10 text-center text-sm text-[#55717b]">
                     No appointment history found.
                   </div>
                 ) : (
-                  <div className="flex flex-col border border-[var(--border)] rounded-[var(--radius-md)] overflow-hidden">
+                  <div className="flex flex-col overflow-hidden rounded-2xl border border-[#d8edf3] bg-[#f8fcfd]/78">
                     {appointments.map((appointment) => {
                       const badge = STATUS_BADGE[appointment.status];
                       return (
-                        <div key={appointment.id} className="flex items-start justify-between gap-3 px-4 py-3 border-b border-[var(--border)] last:border-b-0">
+                        <div key={appointment.id} className="flex items-start justify-between gap-3 border-b border-[#d8edf3] px-4 py-3 last:border-b-0">
                           <div>
-                            <p className="text-sm font-medium text-[var(--text-primary)]">
+                            <p className="text-sm font-semibold text-[#062f3d]">
                               Dr. {appointment.doctor?.first_name} {appointment.doctor?.last_name}
                             </p>
-                            <p className="text-xs text-[var(--text-muted)] mt-0.5">
+                            <p className="text-xs text-[#55717b] mt-0.5">
                               {appointment.doctor?.specialization ?? "Doctor"} - {formatDateTime(appointment.slot_time)}
                             </p>
                           </div>
@@ -360,9 +426,9 @@ export default function PatientsPage() {
 
 function Info({ label, value }: { label: string; value: string }) {
   return (
-    <div className="rounded-[var(--radius-md)] border border-[var(--border)] px-3 py-2">
-      <p className="text-xs text-[var(--text-muted)]">{label}</p>
-      <p className="text-sm font-medium text-[var(--text-primary)] mt-0.5 break-words">{value}</p>
+    <div className="rounded-2xl border border-[#d8edf3] bg-[#f8fcfd]/78 px-4 py-3">
+      <p className="text-xs font-medium text-[#55717b]">{label}</p>
+      <p className="mt-1 break-words text-sm font-semibold text-[#062f3d]">{value}</p>
     </div>
   );
 }
