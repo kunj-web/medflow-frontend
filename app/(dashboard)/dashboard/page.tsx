@@ -682,6 +682,26 @@ function DoctorDashboard() {
       variant: "warning" as const,
     },
   ];
+  const doctorOverview = [
+    {
+      label: "Today",
+      value: todayAppointments.length,
+      detail: "Appointments",
+      tone: "bg-[#d9edbd]/80",
+    },
+    {
+      label: "Tomorrow",
+      value: tomorrowAppointments.length,
+      detail: "Bookings",
+      tone: "bg-[#bfe0f2]/80",
+    },
+    {
+      label: "Scheduled",
+      value: scheduledAppointments.length,
+      detail: "Upcoming",
+      tone: "bg-[#ffc2dc]/75",
+    },
+  ];
 
   return (
     <div className="space-y-7">
@@ -697,21 +717,59 @@ function DoctorDashboard() {
         }
       />
 
+      <section className="overflow-hidden rounded-[28px] border border-white/70 bg-[#dceff5]/80 p-5 shadow-[0_22px_70px_rgba(24,86,115,0.14)] backdrop-blur-2xl sm:p-6">
+        <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_420px] lg:items-end">
+          <div className="max-w-3xl">
+            <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[#2f7689]">
+              Doctor workspace
+            </p>
+            <h2 className="mt-3 text-2xl font-semibold text-[#062f3d] md:text-3xl">
+              Review patients, appointments, and availability.
+            </h2>
+            <p className="mt-3 max-w-2xl text-sm leading-6 text-[#55717b]">
+              Track the today queue, tomorrow bookings, and the schedule patients
+              can book against without leaving your dashboard.
+            </p>
+          </div>
+
+          <div className="grid grid-cols-3 gap-2">
+            {doctorOverview.map((item) => (
+              <div
+                key={item.label}
+                className={`${item.tone} rounded-2xl border border-white/75 px-3 py-4 shadow-sm backdrop-blur-xl`}
+              >
+                <p className="text-xs font-medium text-[#55717b]">{item.label}</p>
+                <p className="mt-2 text-2xl font-semibold text-[#062f3d]">
+                  {loading ? "..." : item.value}
+                </p>
+                <p className="mt-1 text-[11px] font-medium text-[#55717b]">
+                  {item.detail}
+                </p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
       {error && (
-        <div className="mb-4 rounded-lg px-4 py-3 text-sm bg-[var(--error-bg)] text-[var(--error)] border border-[var(--error)]">
+        <div className="rounded-2xl border border-red-200 bg-[var(--error-bg)] px-4 py-3 text-sm text-[var(--error)]">
           {error}
         </div>
       )}
 
-      <div className="grid grid-cols-1 xl:grid-cols-2 gap-4 mb-4">
+      <div className="grid grid-cols-1 gap-5 xl:grid-cols-2">
         {appointmentCountGroups.map((group) => (
-          <Card key={group.title} padding="lg">
-            <div className="flex items-start justify-between gap-4 mb-4">
+          <Card
+            key={group.title}
+            padding="lg"
+            className="border-white/70 bg-white/75 shadow-[0_18px_50px_rgba(24,86,115,0.10)] backdrop-blur-xl"
+          >
+            <div className="mb-5 flex items-start justify-between gap-4">
               <div>
-                <h2 className="text-sm font-semibold text-[var(--text-primary)]">
+                <h2 className="text-sm font-semibold text-[#062f3d]">
                   {group.title} appointments
                 </h2>
-                <p className="text-xs text-[var(--text-muted)] mt-1">
+                <p className="mt-1 text-xs text-[#55717b]">
                   {group.subtitle}
                 </p>
               </div>
@@ -720,14 +778,14 @@ function DoctorDashboard() {
               </Badge>
             </div>
 
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+            <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
               {appointmentCountStatuses.map((item) => (
                 <div
                   key={`${group.title}-${item.status}`}
-                  className="rounded-[var(--radius-md)] border border-[var(--border)] bg-[var(--gray-50)] px-3 py-3"
+                  className="rounded-2xl border border-[#d8edf3] bg-[#f8fcfd]/80 px-3 py-3"
                 >
                   <div className="flex items-center justify-between gap-2">
-                    <span className="text-xs font-medium text-[var(--text-muted)]">
+                    <span className="text-xs font-medium text-[#55717b]">
                       {item.label}
                     </span>
                     <Badge variant={item.variant} dot>
@@ -743,20 +801,23 @@ function DoctorDashboard() {
         ))}
       </div>
 
-      <div className="grid grid-cols-1 xl:grid-cols-[minmax(0,1fr)_340px] gap-4">
-        <Card padding="lg" className="min-h-[240px]">
+      <div className="grid grid-cols-1 gap-5 xl:grid-cols-[minmax(0,1fr)_360px]">
+        <Card
+          padding="lg"
+          className="min-h-[240px] border-white/70 bg-white/75 shadow-[0_18px_50px_rgba(24,86,115,0.10)] backdrop-blur-xl"
+        >
           <div className="flex items-start justify-between gap-4">
             <div>
-              <h2 className="text-sm font-semibold text-[var(--text-primary)]">
+              <h2 className="text-sm font-semibold text-[#062f3d]">
                 Next patient
               </h2>
-              <p className="text-xs text-[var(--text-muted)] mt-1">
+              <p className="mt-1 text-xs text-[#55717b]">
                 Nearest upcoming scheduled appointment
               </p>
             </div>
             <Link
               href="/appointments"
-              className="text-sm font-medium text-[var(--accent)] hover:text-[var(--accent-hover)]"
+              className="text-sm font-semibold text-[#0f9fa8] hover:text-[#0b7880]"
             >
               View appointments
             </Link>
@@ -764,14 +825,14 @@ function DoctorDashboard() {
 
           <div className="mt-8">
             {loading ? (
-              <div className="flex items-center gap-2 text-sm text-[var(--text-muted)]">
+              <div className="flex items-center gap-2 text-sm text-[#55717b]">
                 <Spinner size="sm" /> Loading next patient...
               </div>
             ) : nextAppointment ? (
-              <div className="grid grid-cols-1 md:grid-cols-[minmax(0,1fr)_auto] gap-5 items-end">
+              <div className="grid grid-cols-1 items-end gap-5 rounded-[24px] border border-[#d8edf3] bg-[#f8fcfd]/80 p-5 md:grid-cols-[minmax(0,1fr)_auto]">
                 <div>
                   <div className="flex flex-wrap items-center gap-2">
-                    <p className="text-xl font-semibold text-[var(--text-primary)]">
+                    <p className="text-xl font-semibold text-[#062f3d]">
                       {nextAppointment.patient
                         ? `${nextAppointment.patient.first_name} ${nextAppointment.patient.last_name}`
                         : "Patient appointment"}
@@ -780,13 +841,13 @@ function DoctorDashboard() {
                       <Badge variant={nextStatus.variant}>{nextStatus.label}</Badge>
                     )}
                   </div>
-                  <p className="text-sm text-[var(--text-secondary)] mt-1 capitalize">
+                  <p className="mt-1 text-sm capitalize text-[#55717b]">
                     {nextAppointment.type.replace("_", " ")}
                   </p>
-                  <p className="text-sm font-medium text-[var(--text-primary)] mt-5">
+                  <p className="mt-5 text-sm font-semibold text-[#062f3d]">
                     {formatDateTime(nextAppointment.slot_time)}
                   </p>
-                  <p className="text-xs text-[var(--text-muted)] mt-1">
+                  <p className="mt-1 text-xs text-[#55717b]">
                     {nextAppointment.token_number
                       ? `Token #${nextAppointment.token_number}`
                       : "Token not assigned"}
@@ -803,11 +864,11 @@ function DoctorDashboard() {
                 </Link>
               </div>
             ) : (
-              <div className="flex flex-col gap-3">
-                <p className="text-sm font-medium text-[var(--text-primary)]">
+              <div className="flex flex-col gap-3 rounded-[24px] border border-[#d8edf3] bg-[#f8fcfd]/80 p-5">
+                <p className="text-sm font-semibold text-[#062f3d]">
                   No upcoming patient
                 </p>
-                <p className="text-sm text-[var(--text-muted)] max-w-lg">
+                <p className="max-w-lg text-sm text-[#55717b]">
                   Scheduled appointments will appear here when patients book a slot.
                 </p>
               </div>
@@ -815,13 +876,16 @@ function DoctorDashboard() {
           </div>
         </Card>
 
-        <Card padding="lg" className="min-h-[240px]">
-          <div className="flex items-start justify-between gap-4 mb-5">
+        <Card
+          padding="lg"
+          className="min-h-[240px] border-white/70 bg-white/75 shadow-[0_18px_50px_rgba(24,86,115,0.10)] backdrop-blur-xl"
+        >
+          <div className="mb-5 flex items-start justify-between gap-4">
             <div>
-              <h2 className="text-sm font-semibold text-[var(--text-primary)]">
+              <h2 className="text-sm font-semibold text-[#062f3d]">
                 Today queue
               </h2>
-              <p className="text-xs text-[var(--text-muted)] mt-1">
+              <p className="mt-1 text-xs text-[#55717b]">
                 First five appointments today
               </p>
             </div>
@@ -831,20 +895,20 @@ function DoctorDashboard() {
           </div>
 
           {loading ? (
-            <div className="flex items-center gap-2 py-8 text-sm text-[var(--text-muted)]">
+            <div className="flex items-center gap-2 py-8 text-sm text-[#55717b]">
               <Spinner size="sm" /> Loading queue...
             </div>
           ) : todayAppointments.length === 0 ? (
             <div className="py-8">
-              <p className="text-sm font-medium text-[var(--text-primary)]">
+              <p className="text-sm font-semibold text-[#062f3d]">
                 No appointments today
               </p>
-              <p className="text-sm text-[var(--text-muted)] mt-1">
+              <p className="mt-1 text-sm text-[#55717b]">
                 Your queue is clear for today.
               </p>
             </div>
           ) : (
-            <div className="divide-y divide-[var(--border)]">
+            <div className="grid gap-2">
               {todayAppointments
                 .slice()
                 .sort(
@@ -855,15 +919,18 @@ function DoctorDashboard() {
                 .map((appointment) => {
                   const status = STATUS_BADGE[appointment.status];
                   return (
-                    <div key={appointment.id} className="py-3 first:pt-0 last:pb-0">
+                    <div
+                      key={appointment.id}
+                      className="rounded-2xl border border-[#d8edf3] bg-[#f8fcfd]/80 px-3 py-3"
+                    >
                       <div className="flex items-start justify-between gap-3">
                         <div className="min-w-0">
-                          <p className="text-sm font-medium text-[var(--text-primary)] truncate">
+                          <p className="truncate text-sm font-semibold text-[#062f3d]">
                             {appointment.patient
                               ? `${appointment.patient.first_name} ${appointment.patient.last_name}`
                               : "Patient"}
                           </p>
-                          <p className="text-xs text-[var(--text-muted)] mt-1">
+                          <p className="mt-1 text-xs text-[#55717b]">
                             {formatDateTime(appointment.slot_time)}
                           </p>
                         </div>
@@ -877,14 +944,17 @@ function DoctorDashboard() {
         </Card>
       </div>
 
-      <div className="mt-4">
-        <Card padding="lg">
-          <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4 mb-5">
+      <div>
+        <Card
+          padding="lg"
+          className="border-white/70 bg-white/75 shadow-[0_18px_50px_rgba(24,86,115,0.10)] backdrop-blur-xl"
+        >
+          <div className="mb-5 flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
             <div>
-              <h2 className="text-sm font-semibold text-[var(--text-primary)]">
+              <h2 className="text-sm font-semibold text-[#062f3d]">
                 Schedule status
               </h2>
-              <p className="text-xs text-[var(--text-muted)] mt-1">
+              <p className="mt-1 text-xs text-[#55717b]">
                 {doctor
                   ? `${doctor.specialization} availability for patient bookings`
                   : "Weekly availability for patient bookings"}
@@ -907,23 +977,23 @@ function DoctorDashboard() {
           </div>
 
           {loading ? (
-            <div className="flex items-center gap-2 py-6 text-sm text-[var(--text-muted)]">
+            <div className="flex items-center gap-2 py-6 text-sm text-[#55717b]">
               <Spinner size="sm" /> Loading schedule...
             </div>
           ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-2">
+            <div className="grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-4">
               {WEEK_DAYS.map((day) => {
                 const schedule = scheduleByDay.get(day.value);
                 return (
                   <div
                     key={day.value}
-                    className="flex items-center justify-between gap-3 rounded-[var(--radius-md)] border border-[var(--border)] px-3 py-2.5 bg-white"
+                    className="flex items-center justify-between gap-3 rounded-2xl border border-[#d8edf3] bg-[#f8fcfd]/80 px-3 py-3"
                   >
                     <div className="min-w-0">
-                      <p className="text-sm font-medium text-[var(--text-primary)]">
+                      <p className="text-sm font-semibold text-[#062f3d]">
                         {day.label}
                       </p>
-                      <p className="text-xs text-[var(--text-muted)] mt-0.5">
+                      <p className="mt-0.5 text-xs text-[#55717b]">
                         {schedule
                           ? `${formatScheduleTime(schedule.start_time)} - ${formatScheduleTime(schedule.end_time)}`
                           : "Inactive"}
@@ -931,7 +1001,7 @@ function DoctorDashboard() {
                     </div>
                     <div className="flex items-center gap-2 shrink-0">
                       {schedule && (
-                        <span className="text-xs font-mono text-[var(--text-secondary)]">
+                        <span className="font-mono text-xs text-[#55717b]">
                           {schedule.slot_duration_minutes}m
                         </span>
                       )}
@@ -947,14 +1017,17 @@ function DoctorDashboard() {
         </Card>
       </div>
 
-      <div className="mt-4">
-        <Card padding="lg">
-          <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4 mb-5">
+      <div>
+        <Card
+          padding="lg"
+          className="border-white/70 bg-white/75 shadow-[0_18px_50px_rgba(24,86,115,0.10)] backdrop-blur-xl"
+        >
+          <div className="mb-5 flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
             <div>
-              <h2 className="text-sm font-semibold text-[var(--text-primary)]">
+              <h2 className="text-sm font-semibold text-[#062f3d]">
                 Blocked availability
               </h2>
-              <p className="text-xs text-[var(--text-muted)] mt-1">
+              <p className="mt-1 text-xs text-[#55717b]">
                 Dates and slots patients cannot book
               </p>
             </div>
@@ -966,18 +1039,18 @@ function DoctorDashboard() {
           </div>
 
           {loading ? (
-            <div className="flex items-center gap-2 py-6 text-sm text-[var(--text-muted)]">
+            <div className="flex items-center gap-2 py-6 text-sm text-[#55717b]">
               <Spinner size="sm" /> Loading blocked availability...
             </div>
           ) : (
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-              <div className="rounded-[var(--radius-md)] border border-[var(--border)] px-4 py-3">
-                <div className="flex items-center justify-between gap-3 mb-3">
+            <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+              <div className="rounded-[24px] border border-[#d8edf3] bg-[#f8fcfd]/80 px-4 py-4">
+                <div className="mb-3 flex items-center justify-between gap-3">
                   <div>
-                    <p className="text-sm font-semibold text-[var(--text-primary)]">
+                    <p className="text-sm font-semibold text-[#062f3d]">
                       Upcoming unavailable days
                     </p>
-                    <p className="text-xs text-[var(--text-muted)] mt-0.5">
+                    <p className="mt-0.5 text-xs text-[#55717b]">
                       Full-day blocks
                     </p>
                   </div>
@@ -987,18 +1060,18 @@ function DoctorDashboard() {
                 </div>
 
                 {upcomingLeaves.length === 0 ? (
-                  <p className="py-4 text-sm text-[var(--text-muted)]">
+                  <p className="py-4 text-sm text-[#55717b]">
                     No upcoming unavailable days.
                   </p>
                 ) : (
-                  <div className="divide-y divide-[var(--border)]">
+                  <div className="divide-y divide-[#d8edf3]">
                     {upcomingLeaves.map((leave) => (
                       <div key={leave.id} className="py-3 first:pt-0 last:pb-0">
-                        <p className="text-sm font-medium text-[var(--text-primary)]">
+                        <p className="text-sm font-semibold text-[#062f3d]">
                           {formatDateLabel(leave.leave_date)}
                         </p>
                         {leave.reason && (
-                          <p className="text-xs text-[var(--text-muted)] mt-1">
+                          <p className="mt-1 text-xs text-[#55717b]">
                             {leave.reason}
                           </p>
                         )}
@@ -1008,13 +1081,13 @@ function DoctorDashboard() {
                 )}
               </div>
 
-              <div className="rounded-[var(--radius-md)] border border-[var(--border)] px-4 py-3">
-                <div className="flex items-center justify-between gap-3 mb-3">
+              <div className="rounded-[24px] border border-[#d8edf3] bg-[#f8fcfd]/80 px-4 py-4">
+                <div className="mb-3 flex items-center justify-between gap-3">
                   <div>
-                    <p className="text-sm font-semibold text-[var(--text-primary)]">
+                    <p className="text-sm font-semibold text-[#062f3d]">
                       Tomorrow blocked slots
                     </p>
-                    <p className="text-xs text-[var(--text-muted)] mt-0.5">
+                    <p className="mt-0.5 text-xs text-[#55717b]">
                       {formatDateLabel(toDateParam(tomorrowDate()))}
                     </p>
                   </div>
@@ -1024,18 +1097,18 @@ function DoctorDashboard() {
                 </div>
 
                 {tomorrowBlocks.length === 0 ? (
-                  <p className="py-4 text-sm text-[var(--text-muted)]">
+                  <p className="py-4 text-sm text-[#55717b]">
                     No blocked slots for tomorrow.
                   </p>
                 ) : (
-                  <div className="divide-y divide-[var(--border)]">
+                  <div className="divide-y divide-[#d8edf3]">
                     {tomorrowBlocks.map((block) => (
                       <div key={block.id} className="py-3 first:pt-0 last:pb-0">
-                        <p className="text-sm font-mono font-medium text-[var(--text-primary)]">
+                        <p className="font-mono text-sm font-semibold text-[#062f3d]">
                           {formatScheduleTime(block.start_time)} - {formatScheduleTime(block.end_time)}
                         </p>
                         {block.reason && (
-                          <p className="text-xs text-[var(--text-muted)] mt-1">
+                          <p className="mt-1 text-xs text-[#55717b]">
                             {block.reason}
                           </p>
                         )}
