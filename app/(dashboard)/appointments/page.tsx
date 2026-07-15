@@ -58,6 +58,23 @@ export default function AppointmentsPage() {
       tone: "bg-[#ffc2dc]/75",
     },
   ];
+  const appointmentStats = [
+    {
+      label: "Shown",
+      value: appointments.length,
+      tone: "bg-[#d9edbd]/80",
+    },
+    {
+      label: "Scheduled",
+      value: appointments.filter((item) => item.status === AppointmentStatus.SCHEDULED).length,
+      tone: "bg-[#bfe0f2]/80",
+    },
+    {
+      label: "Cancelled",
+      value: appointments.filter((item) => item.status === AppointmentStatus.CANCELLED).length,
+      tone: "bg-[#ffc2dc]/75",
+    },
+  ];
 
   const fetchAppointments = useCallback(async () => {
     setLoading(true);
@@ -166,8 +183,54 @@ export default function AppointmentsPage() {
         </section>
       )}
 
+      {!isPatient && (
+        <section className="overflow-hidden rounded-[28px] border border-white/65 bg-[#dceff5]/80 p-5 shadow-[0_20px_60px_rgba(24,86,115,0.12)] backdrop-blur-2xl sm:p-6">
+          <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_360px] lg:items-end">
+            <div>
+              <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[#24708a]">
+                Appointments dashboard
+              </p>
+              <h2 className="mt-3 max-w-2xl text-3xl font-semibold tracking-normal text-[#062f3d] sm:text-4xl">
+                Review patient visits, statuses, and cancellation activity.
+              </h2>
+              <p className="mt-3 max-w-xl text-sm leading-6 text-[#456773]">
+                Use status and date filters to monitor scheduled appointments,
+                completed visits, no-shows, and cancellations across the workspace.
+              </p>
+            </div>
+            <div className="grid grid-cols-3 gap-3">
+              {appointmentStats.map((item) => (
+                <div
+                  key={item.label}
+                  className={`${item.tone} rounded-2xl border border-white/60 px-3 py-4 text-[#062f3d] shadow-sm backdrop-blur-xl`}
+                >
+                  <p className="text-2xl font-semibold leading-none">
+                    {loading ? "..." : item.value}
+                  </p>
+                  <p className="mt-2 text-xs font-medium text-[#456773]">
+                    {item.label}
+                  </p>
+                </div>
+              ))}
+            </div>
+          </div>
+        </section>
+      )}
+
       <Card padding="none" className="overflow-hidden border-white/70 bg-white/72 shadow-[0_18px_45px_rgba(24,86,115,0.12)] backdrop-blur-xl">
-        <div className="flex flex-col gap-4 border-b border-[#d8edf3] bg-[#f8fcfd]/70 px-5 py-4 sm:flex-row sm:items-center">
+        <div className="border-b border-[#d8edf3] bg-[#f8fcfd]/70 px-5 py-4">
+          <div className="mb-4 flex flex-col gap-1 sm:flex-row sm:items-end sm:justify-between">
+            <div>
+              <h2 className="text-xl font-semibold tracking-normal text-[#062f3d]">
+                Appointment list
+              </h2>
+              <p className="mt-1 text-sm text-[#55717b]">
+                Filter appointments by status or appointment date.
+              </p>
+            </div>
+          </div>
+
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
           <div className="flex items-center gap-1 flex-wrap">
             {STATUS_TABS.map((tab) => (
               <button
@@ -205,6 +268,7 @@ export default function AppointmentsPage() {
                 </button>
               )}
             </div>
+          </div>
           </div>
         </div>
 

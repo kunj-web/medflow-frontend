@@ -171,8 +171,26 @@ export default function AdminReviewPage() {
     }
   }
 
+  const reviewStats = [
+    {
+      label: "Pending",
+      value: doctors.length,
+      tone: "bg-[#d9edbd]/80",
+    },
+    {
+      label: "Hospitals",
+      value: doctors.filter((doctor) => doctor.work_type === "hospital").length,
+      tone: "bg-[#bfe0f2]/80",
+    },
+    {
+      label: "Clinics",
+      value: doctors.filter((doctor) => doctor.work_type === "clinic").length,
+      tone: "bg-[#ffc2dc]/75",
+    },
+  ];
+
   return (
-    <div className="flex flex-col gap-6">
+    <div className="flex flex-col gap-7">
       <PageHeader
         title="Doctor review"
         subtitle="Approve pending doctor registrations and resolve hospital affiliations"
@@ -183,25 +201,57 @@ export default function AdminReviewPage() {
         }
       />
 
+      <section className="overflow-hidden rounded-[28px] border border-white/65 bg-[#dceff5]/80 p-5 shadow-[0_20px_60px_rgba(24,86,115,0.12)] backdrop-blur-2xl sm:p-6">
+        <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_360px] lg:items-end">
+          <div>
+            <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[#24708a]">
+              Admin review queue
+            </p>
+            <h2 className="mt-3 max-w-2xl text-3xl font-semibold tracking-normal text-[#062f3d] sm:text-4xl">
+              Review doctor registrations and resolve affiliations.
+            </h2>
+            <p className="mt-3 max-w-xl text-sm leading-6 text-[#456773]">
+              Approve verified doctors, link them to an existing hospital, or
+              create a hospital profile from the submitted details.
+            </p>
+          </div>
+          <div className="grid grid-cols-3 gap-3">
+            {reviewStats.map((item) => (
+              <div
+                key={item.label}
+                className={`${item.tone} rounded-2xl border border-white/60 px-3 py-4 text-[#062f3d] shadow-sm backdrop-blur-xl`}
+              >
+                <p className="text-2xl font-semibold leading-none">
+                  {loading ? "..." : item.value}
+                </p>
+                <p className="mt-2 text-xs font-medium text-[#456773]">
+                  {item.label}
+                </p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
       {error && (
-        <div className="rounded-lg px-4 py-3 text-sm bg-[var(--error-bg)] text-[var(--error)] border border-red-200">
+        <div className="rounded-2xl border border-red-200 bg-[var(--error-bg)] px-4 py-3 text-sm text-[var(--error)]">
           {error}
         </div>
       )}
 
       {loading ? (
-        <Card padding="lg" className="text-sm text-[var(--text-muted)]">
+        <Card padding="lg" className="border-white/70 bg-white/72 text-sm text-[#55717b] shadow-[0_18px_45px_rgba(24,86,115,0.12)] backdrop-blur-xl">
           Loading pending doctors...
         </Card>
       ) : doctors.length === 0 ? (
-        <Card padding="lg" className="flex flex-col items-center justify-center py-12 gap-2 text-center">
-          <div className="w-10 h-10 rounded-full bg-[var(--success-bg)] text-[var(--success)] flex items-center justify-center">
+        <Card padding="lg" className="flex flex-col items-center justify-center gap-3 border-white/70 bg-white/72 py-14 text-center shadow-[0_18px_45px_rgba(24,86,115,0.12)] backdrop-blur-xl">
+          <div className="flex h-12 w-12 items-center justify-center rounded-2xl border border-green-200 bg-[var(--success-bg)] text-[var(--success)]">
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round">
               <polyline points="20 6 9 17 4 12" />
             </svg>
           </div>
-          <p className="text-sm font-medium text-[var(--text-primary)]">No pending doctors</p>
-          <p className="text-xs text-[var(--text-muted)]">New doctor registrations will appear here.</p>
+          <p className="text-sm font-semibold text-[#062f3d]">No pending doctors</p>
+          <p className="text-xs text-[#55717b]">New doctor registrations will appear here.</p>
         </Card>
       ) : (
         <div className="flex flex-col gap-4">
@@ -212,11 +262,11 @@ export default function AdminReviewPage() {
             const busy = actionId === doctor.id;
 
             return (
-              <Card key={doctor.id} padding="lg" className="flex flex-col gap-5">
+              <Card key={doctor.id} padding="lg" className="flex flex-col gap-5 border-white/70 bg-white/72 shadow-[0_18px_45px_rgba(24,86,115,0.12)] backdrop-blur-xl">
                 <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-4">
                   <div>
                     <div className="flex items-center gap-2 flex-wrap">
-                      <h2 className="text-base font-semibold text-[var(--text-primary)]">
+                      <h2 className="text-lg font-semibold text-[#062f3d]">
                         {fullName(doctor)}
                       </h2>
                       <Badge variant="warning" dot>
@@ -226,52 +276,52 @@ export default function AdminReviewPage() {
                         {doctor.work_type}
                       </Badge>
                     </div>
-                    <p className="text-sm text-[var(--text-secondary)] mt-1">
+                    <p className="text-sm text-[#55717b] mt-1">
                       {doctor.specialization}
                       {doctor.qualification ? `, ${doctor.qualification}` : ""}
                     </p>
-                    <p className="text-xs text-[var(--text-muted)] mt-1">
-                      {[doctor.email, doctor.phone].filter(Boolean).join(" · ")}
+                    <p className="text-xs text-[#55717b] mt-1">
+                      {[doctor.email, doctor.phone].filter(Boolean).join(" - ")}
                     </p>
                   </div>
 
                   <div className="text-left md:text-right">
-                    <p className="text-xs font-medium text-[var(--text-muted)] uppercase tracking-wide">
+                    <p className="text-xs font-semibold uppercase tracking-[0.08em] text-[#55717b]">
                       Affiliation
                     </p>
-                    <p className="text-sm text-[var(--text-primary)] mt-1">
+                    <p className="text-sm font-medium text-[#062f3d] mt-1">
                       {formatWorkplace(doctor) || "Not provided"}
                     </p>
                   </div>
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-3 text-sm">
-                  <div>
-                    <p className="text-xs text-[var(--text-muted)]">Registration no.</p>
-                    <p className="text-[var(--text-primary)]">{doctor.registration_number ?? "-"}</p>
+                  <div className="rounded-2xl border border-[#d8edf3] bg-[#f8fcfd]/78 px-4 py-3">
+                    <p className="text-xs font-medium text-[#55717b]">Registration no.</p>
+                    <p className="mt-1 text-sm font-semibold text-[#062f3d]">{doctor.registration_number ?? "-"}</p>
                   </div>
-                  <div>
-                    <p className="text-xs text-[var(--text-muted)]">Experience</p>
-                    <p className="text-[var(--text-primary)]">{doctor.experience_years} years</p>
+                  <div className="rounded-2xl border border-[#d8edf3] bg-[#f8fcfd]/78 px-4 py-3">
+                    <p className="text-xs font-medium text-[#55717b]">Experience</p>
+                    <p className="mt-1 text-sm font-semibold text-[#062f3d]">{doctor.experience_years} years</p>
                   </div>
-                  <div>
-                    <p className="text-xs text-[var(--text-muted)]">Gender</p>
-                    <p className="text-[var(--text-primary)] capitalize">
+                  <div className="rounded-2xl border border-[#d8edf3] bg-[#f8fcfd]/78 px-4 py-3">
+                    <p className="text-xs font-medium text-[#55717b]">Gender</p>
+                    <p className="mt-1 text-sm font-semibold text-[#062f3d] capitalize">
                       {doctor.gender.replaceAll("_", " ")}
                     </p>
                   </div>
                 </div>
 
                 {needsHospitalDecision && (
-                  <div className="rounded-[var(--radius-md)] border border-[var(--border)] bg-[var(--gray-50)] p-4 flex flex-col gap-3">
+                  <div className="flex flex-col gap-3 rounded-2xl border border-[#d8edf3] bg-[#f8fcfd]/78 p-4">
                     <div className="grid grid-cols-2 gap-2 max-w-md">
                       <button
                         type="button"
                         onClick={() => updateReview(doctor.id, { mode: "existing" })}
-                        className={`h-9 rounded-[var(--radius-md)] border text-sm font-medium ${
+                        className={`h-9 rounded-full border text-sm font-semibold transition-colors ${
                           state.mode === "existing"
-                            ? "border-[var(--accent)] bg-[var(--accent-light)] text-[var(--accent)]"
-                            : "border-[var(--border)] bg-white text-[var(--text-secondary)]"
+                            ? "border-[#0a6792] bg-[#edf8fb] text-[#0a6792]"
+                            : "border-[#d8edf3] bg-white/80 text-[#55717b] hover:bg-[#edf8fb]"
                         }`}
                       >
                         Link existing
@@ -279,10 +329,10 @@ export default function AdminReviewPage() {
                       <button
                         type="button"
                         onClick={() => updateReview(doctor.id, { mode: "create" })}
-                        className={`h-9 rounded-[var(--radius-md)] border text-sm font-medium ${
+                        className={`h-9 rounded-full border text-sm font-semibold transition-colors ${
                           state.mode === "create"
-                            ? "border-[var(--accent)] bg-[var(--accent-light)] text-[var(--accent)]"
-                            : "border-[var(--border)] bg-white text-[var(--text-secondary)]"
+                            ? "border-[#0a6792] bg-[#edf8fb] text-[#0a6792]"
+                            : "border-[#d8edf3] bg-white/80 text-[#55717b] hover:bg-[#edf8fb]"
                         }`}
                       >
                         Create hospital
@@ -291,13 +341,13 @@ export default function AdminReviewPage() {
 
                     {state.mode === "existing" ? (
                       <div className="flex flex-col gap-1.5">
-                        <label className="text-sm font-medium text-[var(--text-primary)]">
+                        <label className="text-sm font-medium text-[#062f3d]">
                           Hospital
                         </label>
                         <select
                           value={state.hospital_id}
                           onChange={(e) => updateReview(doctor.id, { hospital_id: e.target.value })}
-                          className="w-full h-9 rounded-[var(--radius-md)] border border-[var(--border)] bg-white px-3 text-sm"
+                          className="h-9 w-full rounded-2xl border border-[#d8edf3] bg-white/80 px-3 text-sm text-[#062f3d] focus:border-[#0a6792] focus:outline-none focus:ring-2 focus:ring-[#0a6792]"
                         >
                           <option value="">Select hospital</option>
                           {hospitals.map((hospital) => (
@@ -320,7 +370,7 @@ export default function AdminReviewPage() {
                   </div>
                 )}
 
-                <div className="flex flex-col sm:flex-row sm:items-end gap-3 border-t border-[var(--border)] pt-4">
+                <div className="flex flex-col gap-3 border-t border-[#d8edf3] pt-4 sm:flex-row sm:items-end">
                   <div className="flex-1">
                     <Input
                       label="Rejection reason"
@@ -329,7 +379,7 @@ export default function AdminReviewPage() {
                       placeholder="Optional note"
                     />
                   </div>
-                  <div className="flex items-center gap-2">
+                  <div className="flex flex-wrap items-center gap-2">
                     <Button
                       variant="outline"
                       onClick={() => rejectDoctor(doctor)}

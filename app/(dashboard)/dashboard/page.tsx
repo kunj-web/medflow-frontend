@@ -5,7 +5,6 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import api from "@/lib/api";
 import { parseApiError } from "@/lib/auth";
 import { useAuth } from "@/hooks/useAuth";
-import StatCard from "@/components/dashboard/StatCard";
 import PageHeader from "@/components/dashboard/PageHeader";
 import BookModal from "@/components/dashboard/appointments/BookModal";
 import PatientSnapshotCard from "@/components/dashboard/patient/PatientSnapshotCard";
@@ -82,7 +81,7 @@ const QUICK_ACTIONS = [
 const STATS = [
   {
     label: "Today's appointments",
-    value: "—",
+    value: "-",
     icon: (
       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
         <rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/>
@@ -91,7 +90,7 @@ const STATS = [
   },
   {
     label: "Active doctors",
-    value: "—",
+    value: "-",
     icon: (
       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
         <path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/>
@@ -100,7 +99,7 @@ const STATS = [
   },
   {
     label: "Patients registered",
-    value: "—",
+    value: "-",
     icon: (
       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
         <path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/>
@@ -110,7 +109,7 @@ const STATS = [
   },
   {
     label: "Pending invoices",
-    value: "—",
+    value: "-",
     accent: true,
     icon: (
       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
@@ -685,7 +684,7 @@ function DoctorDashboard() {
   ];
 
   return (
-    <div>
+    <div className="space-y-7">
       <PageHeader
         title={`${greeting}, Dr. ${firstName}`}
         subtitle="Your appointment overview"
@@ -1063,6 +1062,18 @@ export default function DashboardPage() {
   const visibleActions = QUICK_ACTIONS.filter(
     (a) => !user?.role || a.roles.includes(user.role as UserRole)
   );
+  const adminStatTones = [
+    "bg-[#d9edbd]/80",
+    "bg-[#bfe0f2]/80",
+    "bg-[#ffc2dc]/75",
+    "bg-[#c9efe6]/80",
+  ];
+  const actionTones = [
+    "bg-[#edf8fb]",
+    "bg-[#eef7dc]",
+    "bg-[#fff0f6]",
+    "bg-[#edf2fb]",
+  ];
 
   if (user?.role === UserRole.PATIENT) {
     return <PatientDashboard />;
@@ -1073,65 +1084,107 @@ export default function DashboardPage() {
   }
 
   return (
-    <div>
+    <div className="flex flex-col gap-7">
       <PageHeader
         title={`${greeting}, ${firstName}`}
         subtitle={`${roleLabel} operations overview`}
       />
 
-      {/* Stat cards */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-        {STATS.map((s) => (
-          <StatCard
-            key={s.label}
-            label={s.label}
-            value={s.value}
-            icon={s.icon}
-            accent={s.accent}
-          />
-        ))}
-      </div>
+      <section className="overflow-hidden rounded-[28px] border border-white/65 bg-[#dceff5]/80 p-5 shadow-[0_20px_60px_rgba(24,86,115,0.12)] backdrop-blur-2xl sm:p-6">
+        <div className="grid gap-7 lg:grid-cols-[minmax(0,1fr)_420px] lg:items-end">
+          <div>
+            <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[#24708a]">
+              Admin command center
+            </p>
+            <h2 className="mt-3 max-w-2xl text-3xl font-semibold tracking-normal text-[#062f3d] sm:text-4xl">
+              Keep doctors, patients, appointments, and billing moving together.
+            </h2>
+            <p className="mt-3 max-w-xl text-sm leading-6 text-[#456773]">
+              Review operational health, jump into admin workflows, and keep the
+              hospital workspace ready for daily care activity.
+            </p>
+          </div>
 
-      {/* Quick actions */}
-      <div className="mb-2">
-        <h2 className="text-sm font-semibold text-[var(--text-primary)] mb-4">Quick actions</h2>
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-          {visibleActions.map((action) => (
-            <Link key={action.href} href={action.href}>
-              <Card
-                padding="md"
-                className="h-full flex flex-col gap-3 cursor-pointer hover:border-[var(--accent-muted)] hover:shadow-md transition-all duration-150 group"
+          <div className="grid grid-cols-2 gap-4">
+            {STATS.map((stat, index) => (
+              <div
+                key={stat.label}
+                className={`${adminStatTones[index % adminStatTones.length]} rounded-2xl border border-white/60 px-4 py-4 text-[#062f3d] shadow-sm backdrop-blur-xl`}
               >
-                <div className="w-9 h-9 rounded-[var(--radius-md)] bg-[var(--accent-light)] text-[var(--accent)] flex items-center justify-center group-hover:bg-[var(--accent)] group-hover:text-white transition-colors duration-150">
+                <div className="flex items-center justify-between gap-3">
+                  <p className="text-xs font-semibold uppercase tracking-[0.08em] text-[#456773]">
+                    {stat.label}
+                  </p>
+                  <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl border border-white/60 bg-white/48 text-[#0a6792]">
+                    {stat.icon}
+                  </div>
+                </div>
+                <p className="mt-4 font-mono text-2xl font-semibold leading-none">
+                  {stat.value}
+                </p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      <section className="rounded-[28px] border border-white/70 bg-white/72 p-5 shadow-[0_18px_45px_rgba(24,86,115,0.12)] backdrop-blur-xl sm:p-6">
+        <div className="mb-5">
+          <div className="inline-flex rounded-full border border-[#b7d5de] bg-[#edf8fb] px-3 py-1 text-xs font-semibold text-[#0a6792]">
+            Quick actions
+          </div>
+          <h2 className="mt-4 text-xl font-semibold tracking-normal text-[#062f3d]">
+            Admin workflows
+          </h2>
+          <p className="mt-1 text-sm text-[#55717b]">
+            Fast access to the areas admins use most.
+          </p>
+        </div>
+
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
+          {visibleActions.map((action, index) => (
+            <Link key={action.href} href={action.href}>
+              <div className="group flex h-full min-h-[150px] cursor-pointer flex-col justify-between rounded-2xl border border-[#d8edf3] bg-[#f8fcfd]/78 p-4 shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:border-[#9bc7d2] hover:shadow-[0_16px_36px_rgba(24,86,115,0.13)]">
+                <div
+                  className={`${actionTones[index % actionTones.length]} flex h-10 w-10 items-center justify-center rounded-2xl text-[#0a6792] transition-colors duration-150 group-hover:bg-[#dceff5]`}
+                >
                   {action.icon}
                 </div>
                 <div>
-                  <p className="text-sm font-medium text-[var(--text-primary)]">{action.label}</p>
-                  <p className="text-xs text-[var(--text-muted)] mt-0.5">{action.description}</p>
+                  <p className="text-sm font-semibold text-[#062f3d]">{action.label}</p>
+                  <p className="mt-1 text-xs leading-5 text-[#55717b]">{action.description}</p>
                 </div>
-              </Card>
+              </div>
             </Link>
           ))}
         </div>
-      </div>
+      </section>
 
       {/* Recent activity placeholder — will be replaced when feature pages are built */}
-      <div className="mt-8">
-        <h2 className="text-sm font-semibold text-[var(--text-primary)] mb-4">Recent activity</h2>
-        <Card padding="lg" className="flex flex-col items-center justify-center py-12 gap-3 text-center">
-          <div className="w-10 h-10 rounded-full bg-[var(--gray-100)] flex items-center justify-center text-[var(--text-muted)]">
+      <section className="rounded-[28px] border border-white/70 bg-white/72 p-5 shadow-[0_18px_45px_rgba(24,86,115,0.12)] backdrop-blur-xl sm:p-6">
+        <div className="mb-5">
+          <h2 className="text-xl font-semibold tracking-normal text-[#062f3d]">
+            Recent activity
+          </h2>
+          <p className="mt-1 text-sm text-[#55717b]">
+            A live activity stream can be connected here once admin reporting APIs are ready.
+          </p>
+        </div>
+
+        <div className="flex flex-col items-center justify-center gap-3 rounded-2xl border border-[#d8edf3] bg-[#f8fcfd]/78 px-5 py-12 text-center">
+          <div className="flex h-12 w-12 items-center justify-center rounded-2xl border border-[#d8edf3] bg-[#edf8fb] text-[#0a6792]">
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round">
               <circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>
             </svg>
           </div>
           <div>
-            <p className="text-sm font-medium text-[var(--text-primary)]">No recent activity</p>
-            <p className="text-xs text-[var(--text-muted)] mt-1">
+            <p className="text-sm font-semibold text-[#062f3d]">No recent activity</p>
+            <p className="mt-1 text-xs text-[#55717b]">
               Activity will appear here once appointments and invoices are created.
             </p>
           </div>
-        </Card>
-      </div>
+        </div>
+      </section>
     </div>
   );
 }

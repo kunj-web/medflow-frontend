@@ -102,6 +102,23 @@ export default function InvoicesPage() {
     if (total > 0) return `${total} invoice${total === 1 ? "" : "s"} in view`;
     return "Billing, payments, and invoice lifecycle";
   }, [total]);
+  const invoiceStats = [
+    {
+      label: "Shown",
+      value: invoices.length,
+      tone: "bg-[#d9edbd]/80",
+    },
+    {
+      label: "Paid",
+      value: invoices.filter((invoice) => invoice.status === InvoiceStatus.PAID).length,
+      tone: "bg-[#bfe0f2]/80",
+    },
+    {
+      label: "Balance",
+      value: formatCurrency(invoices.reduce((sum, invoice) => sum + invoice.balance_due, 0)),
+      tone: "bg-[#ffc2dc]/75",
+    },
+  ];
 
   async function refreshSelected(invoiceId: string) {
     const { data } = await api.get<Invoice>(`/api/v1/invoices/${invoiceId}`);
@@ -145,7 +162,7 @@ export default function InvoicesPage() {
   }
 
   return (
-    <div>
+    <div className="flex flex-col gap-7">
       <PageHeader
         title="Invoices"
         subtitle={subtitle}
@@ -161,8 +178,52 @@ export default function InvoicesPage() {
         }
       />
 
-      <Card padding="none">
-        <div className="flex flex-col sm:flex-row sm:items-center gap-3 px-5 py-3 border-b border-[var(--border)]">
+      <section className="overflow-hidden rounded-[28px] border border-white/65 bg-[#dceff5]/80 p-5 shadow-[0_20px_60px_rgba(24,86,115,0.12)] backdrop-blur-2xl sm:p-6">
+        <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_360px] lg:items-end">
+          <div>
+            <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[#24708a]">
+              Admin billing
+            </p>
+            <h2 className="mt-3 max-w-2xl text-3xl font-semibold tracking-normal text-[#062f3d] sm:text-4xl">
+              Manage invoices, payment status, and balances.
+            </h2>
+            <p className="mt-3 max-w-xl text-sm leading-6 text-[#456773]">
+              Create invoices for appointments, issue drafts, record payments,
+              and track outstanding balances in one place.
+            </p>
+          </div>
+          <div className="grid grid-cols-3 gap-3">
+            {invoiceStats.map((item) => (
+              <div
+                key={item.label}
+                className={`${item.tone} rounded-2xl border border-white/60 px-3 py-4 text-[#062f3d] shadow-sm backdrop-blur-xl`}
+              >
+                <p className="truncate text-2xl font-semibold leading-none">
+                  {loading ? "..." : item.value}
+                </p>
+                <p className="mt-2 text-xs font-medium text-[#456773]">
+                  {item.label}
+                </p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      <Card padding="none" className="overflow-hidden border-white/70 bg-white/72 shadow-[0_18px_45px_rgba(24,86,115,0.12)] backdrop-blur-xl">
+        <div className="border-b border-[#d8edf3] bg-[#f8fcfd]/70 px-5 py-4">
+          <div className="mb-4 flex flex-col gap-1 sm:flex-row sm:items-end sm:justify-between">
+            <div>
+              <h2 className="text-xl font-semibold tracking-normal text-[#062f3d]">
+                Invoice list
+              </h2>
+              <p className="mt-1 text-sm text-[#55717b]">
+                Filter invoices by lifecycle status and open details.
+              </p>
+            </div>
+          </div>
+
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
           <div className="flex items-center gap-1 flex-wrap">
             {STATUS_TABS.map((tab) => (
               <button
@@ -172,10 +233,10 @@ export default function InvoicesPage() {
                   setPage(1);
                 }}
                 className={cn(
-                  "px-3 py-1.5 rounded-[var(--radius-md)] text-xs font-medium transition-colors whitespace-nowrap",
+                  "rounded-full px-3 py-1.5 text-xs font-semibold transition-colors whitespace-nowrap",
                   status === tab.value
-                    ? "bg-[var(--accent)] text-white"
-                    : "text-[var(--text-secondary)] hover:bg-[var(--gray-100)]"
+                    ? "bg-[#0a6792] text-[#eaf8fb] shadow-sm"
+                    : "border border-[#d8edf3] bg-white/70 text-[#55717b] hover:bg-[#edf8fb] hover:text-[#062f3d]"
                 )}
               >
                 {tab.label}
@@ -186,25 +247,26 @@ export default function InvoicesPage() {
             Refresh
           </Button>
         </div>
+        </div>
 
         {error && (
-          <div className="px-5 py-3 bg-[var(--error-bg)] border-b border-red-200">
+          <div className="border-b border-red-200 bg-[var(--error-bg)] px-5 py-3">
             <p className="text-sm text-[var(--error)]">{error}</p>
           </div>
         )}
 
         {loading ? (
-          <div className="flex items-center justify-center py-20 gap-2 text-sm text-[var(--text-muted)]">
+          <div className="flex items-center justify-center py-20 gap-2 text-sm text-[#55717b]">
             <Spinner size="sm" /> Loading invoices...
           </div>
         ) : invoices.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-20 gap-3 text-center">
-            <div className="w-10 h-10 rounded-full bg-[var(--gray-100)] flex items-center justify-center text-[var(--text-muted)]">
+            <div className="flex h-12 w-12 items-center justify-center rounded-2xl border border-[#d8edf3] bg-[#edf8fb] text-[#0a6792]">
               <ReceiptText size={18} />
             </div>
             <div>
-              <p className="text-sm font-medium text-[var(--text-primary)]">No invoices found</p>
-              <p className="text-xs text-[var(--text-muted)] mt-1">
+              <p className="text-sm font-semibold text-[#062f3d]">No invoices found</p>
+              <p className="text-xs text-[#55717b] mt-1">
                 Create an invoice from a completed or scheduled appointment.
               </p>
             </div>
@@ -213,11 +275,11 @@ export default function InvoicesPage() {
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
-                <tr className="border-b border-[var(--border)] bg-[var(--gray-50)]">
+                <tr className="border-b border-[#d8edf3] bg-[#edf8fb]/70">
                   {["Invoice", "Created", "Status", "Total", "Paid", "Balance", ""].map((header) => (
                     <th
                       key={header}
-                      className="px-4 py-3 text-left text-xs font-semibold text-[var(--text-muted)] uppercase tracking-wide whitespace-nowrap first:pl-5 last:pr-5"
+                      className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-[#55717b] whitespace-nowrap first:pl-5 last:pr-5"
                     >
                       {header}
                     </th>
@@ -231,27 +293,27 @@ export default function InvoicesPage() {
                     <tr
                       key={invoice.id}
                       className={cn(
-                        "border-b border-[var(--border)] hover:bg-[var(--gray-50)] transition-colors",
+                        "border-b border-[#d8edf3] transition-colors hover:bg-[#f8fcfd]",
                         index === invoices.length - 1 && "border-b-0"
                       )}
                     >
                       <td className="px-4 py-3 pl-5">
-                        <p className="font-medium text-[var(--text-primary)]">{invoice.invoice_number}</p>
-                        <p className="text-xs text-[var(--text-muted)]">Appt {invoice.appointment_id.slice(0, 8)}</p>
+                        <p className="font-semibold text-[#062f3d]">{invoice.invoice_number}</p>
+                        <p className="text-xs text-[#55717b]">Appt {invoice.appointment_id.slice(0, 8)}</p>
                       </td>
-                      <td className="px-4 py-3 text-xs text-[var(--text-secondary)] whitespace-nowrap">
+                      <td className="px-4 py-3 text-xs text-[#456773] whitespace-nowrap">
                         {formatDate(invoice.created_at)}
                       </td>
                       <td className="px-4 py-3">
                         <Badge variant={badge.variant} dot>{badge.label}</Badge>
                       </td>
-                      <td className="px-4 py-3 font-mono text-xs text-[var(--text-secondary)]">
+                      <td className="px-4 py-3 font-mono text-xs text-[#456773]">
                         {formatCurrency(invoice.total_amount)}
                       </td>
-                      <td className="px-4 py-3 font-mono text-xs text-[var(--text-secondary)]">
+                      <td className="px-4 py-3 font-mono text-xs text-[#456773]">
                         {formatCurrency(invoice.amount_paid)}
                       </td>
-                      <td className="px-4 py-3 font-mono text-xs text-[var(--text-secondary)]">
+                      <td className="px-4 py-3 font-mono text-xs text-[#456773]">
                         {formatCurrency(invoice.balance_due)}
                       </td>
                       <td className="px-4 py-3 pr-5 text-right">
@@ -268,8 +330,8 @@ export default function InvoicesPage() {
         )}
 
         {totalPages > 1 && (
-          <div className="flex items-center justify-between px-5 py-3 border-t border-[var(--border)] bg-[var(--gray-50)]">
-            <p className="text-xs text-[var(--text-muted)]">
+          <div className="flex items-center justify-between border-t border-[#d8edf3] bg-[#f8fcfd]/70 px-5 py-3">
+            <p className="text-xs text-[#55717b]">
               Page {page} of {totalPages}
             </p>
             <div className="flex items-center gap-1">
@@ -497,32 +559,35 @@ function InvoiceDrawer({
   const canCancel = invoice.status !== InvoiceStatus.PAID && invoice.status !== InvoiceStatus.CANCELLED;
 
   return (
-    <div className="fixed inset-0 z-50 flex justify-end bg-black/30" onClick={(event) => event.target === event.currentTarget && onClose()}>
-      <aside className="h-full w-full max-w-xl bg-white shadow-lg flex flex-col">
-        <div className="flex items-start justify-between gap-4 px-6 py-5 border-b border-[var(--border)]">
+    <div className="fixed inset-0 z-50 flex justify-end bg-black/35 backdrop-blur-sm" onClick={(event) => event.target === event.currentTarget && onClose()}>
+      <aside className="flex h-full w-full max-w-xl flex-col border-l border-white/60 bg-white/82 shadow-[0_24px_70px_rgba(24,86,115,0.22)] backdrop-blur-2xl">
+        <div className="flex items-start justify-between gap-4 border-b border-[#d8edf3] px-6 py-5">
           <div>
-            <h2 className="text-base font-semibold text-[var(--text-primary)]">{invoice.invoice_number}</h2>
-            <p className="text-sm text-[var(--text-muted)] mt-0.5">Created {formatDateTime(invoice.created_at)}</p>
+            <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[#24708a]">
+              Invoice detail
+            </p>
+            <h2 className="mt-2 text-xl font-semibold text-[#062f3d]">{invoice.invoice_number}</h2>
+            <p className="mt-1 text-sm text-[#55717b]">Created {formatDateTime(invoice.created_at)}</p>
           </div>
           <button
             onClick={onClose}
-            className="w-8 h-8 rounded-[var(--radius-md)] flex items-center justify-center text-[var(--text-muted)] hover:bg-[var(--gray-100)] hover:text-[var(--text-primary)]"
+            className="flex h-8 w-8 items-center justify-center rounded-2xl text-[#55717b] transition-colors hover:bg-[#edf8fb] hover:text-[#062f3d]"
             aria-label="Close invoice detail"
           >
             <X size={16} />
           </button>
         </div>
 
-        <div className="flex-1 overflow-y-auto px-6 py-5 flex flex-col gap-5">
+        <div className="flex flex-1 flex-col gap-5 overflow-y-auto px-6 py-5">
           {actionError && (
-            <div className="px-4 py-3 rounded-[var(--radius-md)] bg-[var(--error-bg)] text-sm text-[var(--error)]">
+            <div className="rounded-2xl border border-red-200 bg-[var(--error-bg)] px-4 py-3 text-sm text-[var(--error)]">
               {actionError}
             </div>
           )}
 
           <div className="flex items-center justify-between gap-3">
             <Badge variant={badge.variant} dot>{badge.label}</Badge>
-            <p className="text-xs text-[var(--text-muted)]">Patient {invoice.patient_id.slice(0, 8)}</p>
+            <p className="text-xs text-[#55717b]">Patient {invoice.patient_id.slice(0, 8)}</p>
           </div>
 
           <div className="grid grid-cols-2 gap-3">
@@ -533,15 +598,15 @@ function InvoiceDrawer({
           </div>
 
           <div>
-            <h3 className="text-sm font-semibold text-[var(--text-primary)] mb-3">Line items</h3>
-            <div className="border border-[var(--border)] rounded-[var(--radius-md)] overflow-hidden">
+            <h3 className="mb-3 text-sm font-semibold text-[#062f3d]">Line items</h3>
+            <div className="overflow-hidden rounded-2xl border border-[#d8edf3] bg-[#f8fcfd]/78">
               {invoice.line_items.map((item, index) => (
-                <div key={`${item.description}-${index}`} className="grid grid-cols-12 gap-2 px-4 py-3 border-b border-[var(--border)] last:border-b-0">
+                <div key={`${item.description}-${index}`} className="grid grid-cols-12 gap-2 border-b border-[#d8edf3] px-4 py-3 last:border-b-0">
                   <div className="col-span-6">
-                    <p className="text-sm font-medium text-[var(--text-primary)]">{item.description}</p>
-                    <p className="text-xs text-[var(--text-muted)]">Qty {item.quantity} x {formatCurrency(item.unit_price)}</p>
+                    <p className="text-sm font-semibold text-[#062f3d]">{item.description}</p>
+                    <p className="text-xs text-[#55717b]">Qty {item.quantity} x {formatCurrency(item.unit_price)}</p>
                   </div>
-                  <p className="col-span-6 text-right font-mono text-xs text-[var(--text-secondary)]">
+                  <p className="col-span-6 text-right font-mono text-xs text-[#456773]">
                     {formatCurrency(item.amount)}
                   </p>
                 </div>
@@ -550,9 +615,9 @@ function InvoiceDrawer({
           </div>
 
           {invoice.notes && (
-            <div className="rounded-[var(--radius-md)] border border-[var(--border)] px-3 py-2">
-              <p className="text-xs text-[var(--text-muted)]">Notes</p>
-              <p className="text-sm text-[var(--text-primary)] mt-0.5">{invoice.notes}</p>
+            <div className="rounded-2xl border border-[#d8edf3] bg-[#f8fcfd]/78 px-4 py-3">
+              <p className="text-xs font-medium text-[#55717b]">Notes</p>
+              <p className="mt-1 text-sm text-[#062f3d]">{invoice.notes}</p>
             </div>
           )}
 
@@ -561,7 +626,7 @@ function InvoiceDrawer({
           )}
         </div>
 
-        <div className="flex flex-wrap items-center justify-end gap-2 px-6 py-4 border-t border-[var(--border)] bg-[var(--gray-50)]">
+        <div className="flex flex-wrap items-center justify-end gap-2 border-t border-[#d8edf3] bg-[#f8fcfd]/70 px-6 py-4">
           {canCancel && (
             <Button variant="ghost" size="sm" onClick={() => onCancel(invoice)} loading={actionLoading} className="text-[var(--error)]">
               <Ban size={14} /> Cancel
@@ -609,8 +674,8 @@ function PaymentForm({ invoice, onPaid }: { invoice: Invoice; onPaid: () => void
   }
 
   return (
-    <div className="rounded-[var(--radius-md)] border border-[var(--border)] p-4 flex flex-col gap-3">
-      <h3 className="text-sm font-semibold text-[var(--text-primary)]">Record payment</h3>
+    <div className="flex flex-col gap-3 rounded-2xl border border-[#d8edf3] bg-[#f8fcfd]/78 p-4">
+      <h3 className="text-sm font-semibold text-[#062f3d]">Record payment</h3>
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
         <Input
           label="Amount"
@@ -622,11 +687,11 @@ function PaymentForm({ invoice, onPaid }: { invoice: Invoice; onPaid: () => void
           leftAddon={<IndianRupee size={14} />}
         />
         <div className="flex flex-col gap-1.5">
-          <label className="text-sm font-medium text-[var(--text-primary)]">Method</label>
+          <label className="text-sm font-medium text-[#062f3d]">Method</label>
           <select
             value={paymentMethod}
             onChange={(event) => setPaymentMethod(event.target.value as PaymentMethod)}
-            className="w-full h-9 px-3 rounded-[var(--radius-md)] border border-[var(--border)] text-sm text-[var(--text-primary)] bg-white"
+            className="h-9 w-full rounded-2xl border border-[#d8edf3] bg-white/80 px-3 text-sm text-[#062f3d] focus:border-[#0a6792] focus:outline-none focus:ring-2 focus:ring-[#0a6792]"
           >
             <option value={PaymentMethod.UPI}>UPI</option>
             <option value={PaymentMethod.CASH}>Cash</option>
@@ -651,9 +716,9 @@ function PaymentForm({ invoice, onPaid }: { invoice: Invoice; onPaid: () => void
 
 function Metric({ label, value }: { label: string; value: string }) {
   return (
-    <div className="rounded-[var(--radius-md)] border border-[var(--border)] px-3 py-2">
-      <p className="text-xs text-[var(--text-muted)]">{label}</p>
-      <p className="text-sm font-semibold text-[var(--text-primary)] mt-0.5">{value}</p>
+    <div className="rounded-2xl border border-[#d8edf3] bg-[#f8fcfd]/78 px-4 py-3">
+      <p className="text-xs font-medium text-[#55717b]">{label}</p>
+      <p className="mt-1 text-sm font-semibold text-[#062f3d]">{value}</p>
     </div>
   );
 }
