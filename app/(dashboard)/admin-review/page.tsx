@@ -147,7 +147,7 @@ export default function AdminReviewPage() {
     setActionId(doctor.id);
     try {
       await api.post(`/api/v1/admin/doctors/${doctor.id}/approve`, buildApprovePayload(doctor));
-      await fetchPendingDoctors();
+      await Promise.all([fetchPendingDoctors(), fetchHospitals()]);
     } catch (err) {
       setError(parseApiError(err));
     } finally {

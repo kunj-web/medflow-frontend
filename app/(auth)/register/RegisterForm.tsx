@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, FormEvent } from "react";
+import { useCallback, useEffect, useState, FormEvent } from "react";
 import Link from "next/link";
 import api from "@/lib/api";
 import { register, parseApiError } from "@/lib/auth";
@@ -75,16 +75,26 @@ export default function RegisterForm() {
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [hospitals, setHospitals] = useState<HospitalOption[]>([]);
+  const [hospitalsLoading, setHospitalsLoading] = useState(false);
   const [success, setSuccess] = useState<RegisterResponse | null>(null);
 
-  useEffect(() => {
-    api
-      .get<HospitalListResponse>("/api/v1/public/hospitals", {
+  const fetchHospitals = useCallback(async () => {
+    setHospitalsLoading(true);
+    try {
+      const { data } = await api.get<HospitalListResponse>("/api/v1/public/hospitals", {
         params: { page_size: 100 },
-      })
-      .then(({ data }) => setHospitals(data.data))
-      .catch(() => setHospitals([]));
+      });
+      setHospitals(data.data);
+    } catch {
+      setHospitals([]);
+    } finally {
+      setHospitalsLoading(false);
+    }
   }, []);
+
+  useEffect(() => {
+    fetchHospitals();
+  }, [fetchHospitals]);
 
   function handleChange(field: keyof FormState) {
     return (
@@ -401,11 +411,23 @@ export default function RegisterForm() {
 
                     {form.affiliation_mode === "existing" ? (
                       <div className="flex flex-col gap-1.5">
-                        <label className="text-sm font-medium text-[var(--text-primary)]">
-                          Hospital<span className="ml-1 text-[var(--error)]">*</span>
-                        </label>
-                        <select value={form.hospital_id} onChange={handleChange("hospital_id")} className="w-full h-9 rounded-[var(--radius-md)] border border-[var(--border)] bg-white px-3 text-sm">
-                          <option value="">Select hospital</option>
+                        <div className="flex items-center justify-between gap-3">
+                          <label className="text-sm font-medium text-[var(--text-primary)]">
+                            Hospital<span className="ml-1 text-[var(--error)]">*</span>
+                          </label>
+                          <button
+                            type="button"
+                            onClick={fetchHospitals}
+                            disabled={hospitalsLoading}
+                            className="text-xs font-semibold text-[#0a6792] transition-colors hover:text-[#064c68] disabled:cursor-not-allowed disabled:opacity-60"
+                          >
+                            {hospitalsLoading ? "Refreshing..." : "Refresh list"}
+                          </button>
+                        </div>
+                        <select value={form.hospital_id} onFocus={fetchHospitals} onChange={handleChange("hospital_id")} className="w-full h-9 rounded-[var(--radius-md)] border border-[var(--border)] bg-white px-3 text-sm">
+                          <option value="">
+                            {hospitalsLoading ? "Loading hospitals..." : "Select hospital"}
+                          </option>
                           {hospitals.map((hospital) => (
                             <option key={hospital.id} value={hospital.id}>
                               {hospital.name}{hospital.city ? `, ${hospital.city}` : ""}
