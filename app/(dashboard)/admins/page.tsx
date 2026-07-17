@@ -50,6 +50,10 @@ export default function AdminsPage() {
   const [form, setForm] = useState<AdminForm>(EMPTY_FORM);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [actionId, setActionId] = useState<string | null>(null);
+  const [resetAdminId, setResetAdminId] = useState<string | null>(null);
+  const [resetPassword, setResetPassword] = useState("");
+  const [resetConfirmPassword, setResetConfirmPassword] = useState("");
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
 
@@ -102,6 +106,54 @@ export default function AdminsPage() {
       setError(parseApiError(err));
     } finally {
       setSaving(false);
+    }
+  }
+
+  async function handleStatusAction(admin: AdminUser) {
+    if (admin.is_super_admin) return;
+    setError("");
+    setSuccess("");
+    setActionId(admin.id);
+    try {
+      const action = admin.is_active ? "deactivate" : "reactivate";
+      await api.post(`/api/v1/admin/users/${admin.id}/${action}`);
+      setSuccess(admin.is_active ? "Admin deactivated." : "Admin reactivated.");
+      await fetchAdmins();
+    } catch (err) {
+      setError(parseApiError(err));
+    } finally {
+      setActionId(null);
+    }
+  }
+
+  async function handleResetPassword(admin: AdminUser) {
+    if (admin.is_super_admin) return;
+    setError("");
+    setSuccess("");
+
+    if (resetPassword.length < 8) {
+      setError("Password must be at least 8 characters.");
+      return;
+    }
+    if (resetPassword !== resetConfirmPassword) {
+      setError("Reset passwords do not match.");
+      return;
+    }
+
+    setActionId(admin.id);
+    try {
+      await api.post(`/api/v1/admin/users/${admin.id}/reset-password`, {
+        password: resetPassword,
+      });
+      setResetAdminId(null);
+      setResetPassword("");
+      setResetConfirmPassword("");
+      setSuccess("Admin password reset.");
+      await fetchAdmins();
+    } catch (err) {
+      setError(parseApiError(err));
+    } finally {
+      setActionId(null);
     }
   }
 
@@ -244,25 +296,99 @@ export default function AdminsPage() {
               {admins.map((admin) => (
                 <div
                   key={admin.id}
-                  className="flex flex-col gap-3 rounded-2xl border border-[#d8edf3] bg-[#f8fcfd]/80 px-4 py-3 md:flex-row md:items-center md:justify-between"
+                  className="rounded-2xl border border-[#d8edf3] bg-[#f8fcfd]/80 px-4 py-3"
                 >
-                  <div className="min-w-0">
-                    <div className="flex flex-wrap items-center gap-2">
-                      <p className="truncate text-sm font-semibold text-[#062f3d]">
-                        {admin.email}
+                  <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+                    <div className="min-w-0">
+                      <div className="flex flex-wrap items-center gap-2">
+                        <p className="truncate text-sm font-semibold text-[#062f3d]">
+                          {admin.email}
+                        </p>
+                        {admin.is_super_admin && <Badge variant="warning">Superadmin</Badge>}
+                        <Badge variant={admin.is_active ? "success" : "neutral"} dot>
+                          {admin.is_active ? "Active" : "Inactive"}
+                        </Badge>
+                      </div>
+                      <p className="mt-1 text-xs text-[#55717b]">
+                        {admin.phone ?? "No phone"} - Created {formatDate(admin.created_at)}
                       </p>
-                      {admin.is_super_admin && <Badge variant="warning">Superadmin</Badge>}
-                      <Badge variant={admin.is_active ? "success" : "neutral"} dot>
-                        {admin.is_active ? "Active" : "Inactive"}
-                      </Badge>
                     </div>
-                    <p className="mt-1 text-xs text-[#55717b]">
-                      {admin.phone ?? "No phone"} - Created {formatDate(admin.created_at)}
-                    </p>
+
+                    <div className="flex flex-wrap items-center gap-2">
+                      <Badge variant={admin.is_verified ? "success" : "warning"} dot>
+                        {admin.is_verified ? "Verified" : "Unverified"}
+                      </Badge>
+                      {!admin.is_super_admin && (
+                        <>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => {
+                              setResetAdminId((current) =>
+                                current === admin.id ? null : admin.id
+                              );
+                              setResetPassword("");
+                              setResetConfirmPassword("");
+                            }}
+                            disabled={!!actionId}
+                          >
+                            Reset password
+                          </Button>
+                          <Button
+                            variant={admin.is_active ? "destructive" : "secondary"}
+                            size="sm"
+                            onClick={() => handleStatusAction(admin)}
+                            loading={actionId === admin.id && resetAdminId !== admin.id}
+                            disabled={!!actionId}
+                          >
+                            {admin.is_active ? "Deactivate" : "Reactivate"}
+                          </Button>
+                        </>
+                      )}
+                    </div>
                   </div>
-                  <Badge variant={admin.is_verified ? "success" : "warning"} dot>
-                    {admin.is_verified ? "Verified" : "Unverified"}
-                  </Badge>
+
+                  {resetAdminId === admin.id && !admin.is_super_admin && (
+                    <div className="mt-4 grid gap-3 border-t border-[#d8edf3] pt-4 sm:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_auto] sm:items-end">
+                      <Input
+                        label="New password"
+                        type="password"
+                        value={resetPassword}
+                        onChange={(event) => setResetPassword(event.target.value)}
+                        autoComplete="new-password"
+                      />
+                      <Input
+                        label="Confirm password"
+                        type="password"
+                        value={resetConfirmPassword}
+                        onChange={(event) => setResetConfirmPassword(event.target.value)}
+                        autoComplete="new-password"
+                      />
+                      <div className="flex flex-wrap gap-2">
+                        <Button
+                          variant="primary"
+                          size="sm"
+                          onClick={() => handleResetPassword(admin)}
+                          loading={actionId === admin.id}
+                          disabled={!!actionId}
+                        >
+                          Save
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => {
+                            setResetAdminId(null);
+                            setResetPassword("");
+                            setResetConfirmPassword("");
+                          }}
+                          disabled={!!actionId}
+                        >
+                          Cancel
+                        </Button>
+                      </div>
+                    </div>
+                  )}
                 </div>
               ))}
             </div>
