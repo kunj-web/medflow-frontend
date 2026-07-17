@@ -279,6 +279,13 @@ function PatientDashboard() {
       tone: "bg-[#ffc2dc]/75",
     },
   ];
+  const missingProfileItems = [
+    !patient?.blood_group ? "blood group" : null,
+    !patient?.emergency_contact_name ? "emergency contact name" : null,
+    !patient?.emergency_contact_phone ? "emergency contact phone" : null,
+  ].filter(Boolean);
+  const shouldShowProfilePrompt =
+    !patientLoading && !!patient && missingProfileItems.length > 0;
 
   return (
     <div className="space-y-5">
@@ -319,6 +326,30 @@ function PatientDashboard() {
           </div>
         </div>
       </section>
+
+      {shouldShowProfilePrompt && (
+        <Card padding="lg" className="border-white/70 bg-white/75 shadow-[0_18px_45px_rgba(24,86,115,0.12)] backdrop-blur-xl">
+          <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+            <div className="min-w-0">
+              <div className="inline-flex rounded-full border border-[#b7d5de] bg-[#edf8fb] px-3 py-1 text-xs font-semibold text-[#0a6792]">
+                Profile reminder
+              </div>
+              <h2 className="mt-3 text-lg font-semibold text-[#062f3d]">
+                Complete your health profile.
+              </h2>
+              <p className="mt-1 max-w-2xl text-sm leading-6 text-[#55717b]">
+                Add your {missingProfileItems.join(", ")} so your patient card
+                and care details stay ready for visits.
+              </p>
+            </div>
+            <Link href="/profile" className="shrink-0">
+              <Button variant="primary" size="sm">
+                Complete profile
+              </Button>
+            </Link>
+          </div>
+        </Card>
+      )}
 
       <div className="grid grid-cols-1 gap-4 xl:grid-cols-[minmax(0,1fr)_340px]">
         <Card padding="lg" className="min-h-[250px] border-white/70 bg-white/72 shadow-[0_18px_45px_rgba(24,86,115,0.12)] backdrop-blur-xl">
@@ -702,6 +733,8 @@ function DoctorDashboard() {
       tone: "bg-[#ffc2dc]/75",
     },
   ];
+  const shouldShowSchedulePrompt =
+    !loading && !!doctor && activeScheduleDays === 0;
 
   return (
     <div className="space-y-7">
@@ -750,6 +783,30 @@ function DoctorDashboard() {
           </div>
         </div>
       </section>
+
+      {shouldShowSchedulePrompt && (
+        <Card padding="lg" className="border-white/70 bg-white/75 shadow-[0_18px_50px_rgba(24,86,115,0.10)] backdrop-blur-xl">
+          <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+            <div className="min-w-0">
+              <div className="inline-flex rounded-full border border-[#b7d5de] bg-[#edf8fb] px-3 py-1 text-xs font-semibold text-[#0a6792]">
+                Schedule reminder
+              </div>
+              <h2 className="mt-3 text-lg font-semibold text-[#062f3d]">
+                Update your availability.
+              </h2>
+              <p className="mt-1 max-w-2xl text-sm leading-6 text-[#55717b]">
+                Add working days, hours, and slot duration so patients can find
+                bookable times.
+              </p>
+            </div>
+            <Link href="/my-schedule" className="shrink-0">
+              <Button variant="primary" size="sm">
+                Update schedule
+              </Button>
+            </Link>
+          </div>
+        </Card>
+      )}
 
       {error && (
         <div className="rounded-2xl border border-red-200 bg-[var(--error-bg)] px-4 py-3 text-sm text-[var(--error)]">
