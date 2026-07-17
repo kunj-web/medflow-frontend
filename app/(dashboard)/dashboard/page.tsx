@@ -11,7 +11,7 @@ import PatientSnapshotCard from "@/components/dashboard/patient/PatientSnapshotC
 import Badge from "@/components/ui/Badge";
 import Button from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
-import Spinner from "@/components/ui/Spinner";
+import { SkeletonCard, SkeletonList } from "@/components/ui/Skeleton";
 import { formatDateTime, getGreeting } from "@/lib/utils";
 import { Appointment, AppointmentStatus } from "@/types/appointment";
 import { DayOfWeek, PaginatedResponse, UserRole } from "@/types/common";
@@ -381,9 +381,7 @@ function PatientDashboard() {
 
           <div className="mt-8 rounded-2xl border border-[#d8edf3] bg-[#f8fcfd]/78 p-4">
             {loading ? (
-              <div className="flex items-center gap-2 text-sm text-[var(--text-muted)]">
-                <Spinner size="sm" /> Loading next appointment...
-              </div>
+              <SkeletonCard />
             ) : fetchError ? (
               <p className="text-sm text-[var(--error)]">{fetchError}</p>
             ) : nextAppointment ? (
@@ -492,9 +490,7 @@ function PatientDashboard() {
           </div>
 
           {recentLoading ? (
-            <div className="flex items-center gap-2 py-8 text-sm text-[var(--text-muted)]">
-              <Spinner size="sm" /> Loading recent appointments...
-            </div>
+            <SkeletonList rows={3} />
           ) : recentError ? (
             <p className="py-6 text-sm text-[var(--error)]">{recentError}</p>
           ) : recentAppointments.length === 0 ? (
@@ -882,9 +878,7 @@ function DoctorDashboard() {
 
           <div className="mt-8">
             {loading ? (
-              <div className="flex items-center gap-2 text-sm text-[#55717b]">
-                <Spinner size="sm" /> Loading next patient...
-              </div>
+              <SkeletonCard />
             ) : nextAppointment ? (
               <div className="grid grid-cols-1 items-end gap-5 rounded-[24px] border border-[#d8edf3] bg-[#f8fcfd]/80 p-5 md:grid-cols-[minmax(0,1fr)_auto]">
                 <div>
@@ -952,9 +946,7 @@ function DoctorDashboard() {
           </div>
 
           {loading ? (
-            <div className="flex items-center gap-2 py-8 text-sm text-[#55717b]">
-              <Spinner size="sm" /> Loading queue...
-            </div>
+            <SkeletonList rows={3} />
           ) : todayAppointments.length === 0 ? (
             <div className="py-8">
               <p className="text-sm font-semibold text-[#062f3d]">
@@ -1034,9 +1026,7 @@ function DoctorDashboard() {
           </div>
 
           {loading ? (
-            <div className="flex items-center gap-2 py-6 text-sm text-[#55717b]">
-              <Spinner size="sm" /> Loading schedule...
-            </div>
+            <SkeletonList rows={4} className="grid-cols-1 md:grid-cols-2 xl:grid-cols-4" />
           ) : (
             <div className="grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-4">
               {WEEK_DAYS.map((day) => {
@@ -1096,9 +1086,7 @@ function DoctorDashboard() {
           </div>
 
           {loading ? (
-            <div className="flex items-center gap-2 py-6 text-sm text-[#55717b]">
-              <Spinner size="sm" /> Loading blocked availability...
-            </div>
+            <SkeletonList rows={2} className="grid-cols-1 lg:grid-cols-2" />
           ) : (
             <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
               <div className="rounded-[24px] border border-[#d8edf3] bg-[#f8fcfd]/80 px-4 py-4">

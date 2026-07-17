@@ -4,7 +4,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import Button from "@/components/ui/Button";
 import Badge from "@/components/ui/Badge";
 import Input from "@/components/ui/Input";
-import Spinner from "@/components/ui/Spinner";
+import { SkeletonList } from "@/components/ui/Skeleton";
 import { parseApiError } from "@/lib/auth";
 import api from "@/lib/api";
 import type { Doctor, DoctorLeave, Slot } from "@/types/doctor";
@@ -204,8 +204,8 @@ export default function SlotViewer({ doctor, onClose }: SlotViewerProps) {
           )}
 
           {loading && (
-            <div className="flex items-center justify-center py-12 gap-2 text-sm text-[var(--text-muted)]">
-              <Spinner size="sm" /> Loading slots...
+            <div className="py-3">
+              <SkeletonList rows={4} />
             </div>
           )}
 

@@ -16,7 +16,7 @@ import Badge from "@/components/ui/Badge";
 import Button from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import Input from "@/components/ui/Input";
-import Spinner from "@/components/ui/Spinner";
+import { SkeletonList } from "@/components/ui/Skeleton";
 import api from "@/lib/api";
 import { parseApiError } from "@/lib/auth";
 import { cn, formatDate, formatDateTime, formatPhone, getInitials } from "@/lib/utils";
@@ -225,7 +225,7 @@ export default function PatientsPage() {
             />
           </div>
           <p className="text-xs text-[#55717b] sm:ml-auto">
-            {loading ? "Loading..." : `${patients.length} shown`}
+            {loading ? "Refreshing" : `${patients.length} shown`}
           </p>
         </div>
         </div>
@@ -237,8 +237,8 @@ export default function PatientsPage() {
         )}
 
         {loading ? (
-          <div className="flex items-center justify-center py-20 gap-2 text-sm text-[#55717b]">
-            <Spinner size="sm" /> Loading patients...
+          <div className="px-5 py-6">
+            <SkeletonList rows={5} />
           </div>
         ) : patients.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-20 gap-3 text-center">
@@ -388,8 +388,8 @@ export default function PatientsPage() {
                 </div>
 
                 {detailLoading ? (
-                  <div className="flex items-center justify-center py-12 gap-2 text-sm text-[#55717b]">
-                    <Spinner size="sm" /> Loading history...
+                  <div className="py-2">
+                    <SkeletonList rows={3} />
                   </div>
                 ) : appointments.length === 0 ? (
                   <div className="rounded-2xl border border-[#d8edf3] bg-[#f8fcfd]/78 py-10 text-center text-sm text-[#55717b]">

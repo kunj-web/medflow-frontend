@@ -17,7 +17,7 @@ import Badge from "@/components/ui/Badge";
 import Button from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import Input from "@/components/ui/Input";
-import Spinner from "@/components/ui/Spinner";
+import { SkeletonList } from "@/components/ui/Skeleton";
 import api from "@/lib/api";
 import { parseApiError } from "@/lib/auth";
 import { cn, formatCurrency, formatDate, formatDateTime } from "@/lib/utils";
@@ -256,8 +256,8 @@ export default function InvoicesPage() {
         )}
 
         {loading ? (
-          <div className="flex items-center justify-center py-20 gap-2 text-sm text-[#55717b]">
-            <Spinner size="sm" /> Loading invoices...
+          <div className="px-5 py-6">
+            <SkeletonList rows={5} />
           </div>
         ) : invoices.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-20 gap-3 text-center">

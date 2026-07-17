@@ -4,6 +4,7 @@ import { useEffect, useMemo } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import { useAuth } from "@/hooks/useAuth";
 import { UserRole } from "@/types/common";
+import { SkeletonCard } from "@/components/ui/Skeleton";
 
 interface DashboardRouteGuardProps {
   children: React.ReactNode;
@@ -71,8 +72,9 @@ export default function DashboardRouteGuard({ children }: DashboardRouteGuardPro
 
   if (!loaded) {
     return (
-      <div className="p-6 text-sm text-[var(--text-muted)]">
-        Loading workspace...
+      <div className="grid gap-4 p-6">
+        <SkeletonCard />
+        <SkeletonCard />
       </div>
     );
   }

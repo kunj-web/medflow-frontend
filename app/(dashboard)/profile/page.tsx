@@ -8,7 +8,7 @@ import { Card } from "@/components/ui/Card";
 import Badge from "@/components/ui/Badge";
 import Button from "@/components/ui/Button";
 import Input from "@/components/ui/Input";
-import Spinner from "@/components/ui/Spinner";
+import { SkeletonLine } from "@/components/ui/Skeleton";
 import { useAuth } from "@/hooks/useAuth";
 import { getInitials } from "@/lib/utils";
 import { BloodGroup, Gender, UserRole } from "@/types/common";
@@ -315,8 +315,8 @@ export default function ProfilePage() {
                 </p>
               </div>
               {loading && (
-                <div className="flex items-center gap-2 text-xs text-[var(--text-muted)]">
-                  <Spinner size="sm" /> Loading
+                <div className="w-28">
+                  <SkeletonLine />
                 </div>
               )}
             </div>
