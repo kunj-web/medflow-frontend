@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import Button from "@/components/ui/Button";
-import Spinner from "@/components/ui/Spinner";
+import { SkeletonList } from "@/components/ui/Skeleton";
 import { parseApiError } from "@/lib/auth";
 import api from "@/lib/api";
 import type { Doctor, DoctorSchedule, ScheduleUpsert } from "@/types/doctor";
@@ -213,8 +213,8 @@ export default function ScheduleModal({ doctor, onClose, onSaved }: ScheduleModa
 
           {/* Fetch loading */}
           {fetchLoading && (
-            <div className="flex items-center justify-center py-12 gap-2 text-sm text-[var(--text-muted)]">
-              <Spinner size="sm" /> Loading schedule…
+            <div className="py-3">
+              <SkeletonList rows={5} />
             </div>
           )}
 

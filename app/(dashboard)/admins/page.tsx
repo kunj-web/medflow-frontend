@@ -6,7 +6,7 @@ import Badge from "@/components/ui/Badge";
 import Button from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import Input from "@/components/ui/Input";
-import Spinner from "@/components/ui/Spinner";
+import { SkeletonList } from "@/components/ui/Skeleton";
 import { useAuth } from "@/hooks/useAuth";
 import api from "@/lib/api";
 import { parseApiError } from "@/lib/auth";
@@ -231,9 +231,7 @@ export default function AdminsPage() {
           </div>
 
           {loading ? (
-            <div className="flex items-center gap-2 py-8 text-sm text-[#55717b]">
-              <Spinner size="sm" /> Loading admins...
-            </div>
+            <SkeletonList rows={4} />
           ) : admins.length === 0 ? (
             <div className="rounded-2xl border border-[#d8edf3] bg-[#f8fcfd]/80 px-4 py-8 text-center">
               <p className="text-sm font-semibold text-[#062f3d]">No admins found</p>

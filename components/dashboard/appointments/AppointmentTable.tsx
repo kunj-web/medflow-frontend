@@ -5,7 +5,7 @@ import { Appointment, AppointmentStatus, AppointmentType } from "@/types/appoint
 import { formatDateTime, cn } from "@/lib/utils";
 import Badge from "@/components/ui/Badge";
 import Button from "@/components/ui/Button";
-import Spinner from "@/components/ui/Spinner";
+import { SkeletonList } from "@/components/ui/Skeleton";
 
 // ─── Status → Badge variant ───────────────────────────────────────────────────
 
@@ -51,8 +51,8 @@ export default function AppointmentTable({
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center gap-2 py-20 text-sm text-[#55717b]">
-        <Spinner size="sm" /> Loading appointments…
+      <div className="px-5 py-6">
+        <SkeletonList rows={5} />
       </div>
     );
   }

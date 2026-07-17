@@ -4,7 +4,7 @@ import { cn } from "@/lib/utils";
 import Badge from "@/components/ui/Badge";
 import Button from "@/components/ui/Button";
 import Input from "@/components/ui/Input";
-import Spinner from "@/components/ui/Spinner";
+import { SkeletonList } from "@/components/ui/Skeleton";
 import type { Doctor } from "@/types/doctor";
 
 // ── Props ─────────────────────────────────────────────────────────────────────
@@ -102,8 +102,8 @@ export default function DoctorTable({
 
       {/* ── Loading ── */}
       {loading && (
-        <div className="flex items-center justify-center py-20 gap-2 text-sm text-[#55717b]">
-          <Spinner size="sm" /> Loading doctors...
+        <div className="px-5 py-6">
+          <SkeletonList rows={5} />
         </div>
       )}
 

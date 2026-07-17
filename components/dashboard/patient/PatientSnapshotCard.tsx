@@ -4,7 +4,7 @@ import Link from "next/link";
 import Badge from "@/components/ui/Badge";
 import Button from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
-import Spinner from "@/components/ui/Spinner";
+import { SkeletonCard } from "@/components/ui/Skeleton";
 import { formatDate, formatPhone, getInitials } from "@/lib/utils";
 import { Patient } from "@/types/patient";
 
@@ -276,9 +276,7 @@ export default function PatientSnapshotCard({
       </div>
 
       {loading ? (
-        <div className="flex items-center gap-2 rounded-2xl border border-[#d8edf3] bg-[#f8fcfd]/78 p-4 text-sm text-[#55717b]">
-          <Spinner size="sm" /> Loading patient card...
-        </div>
+        <SkeletonCard />
       ) : error ? (
         <p className="rounded-2xl border border-red-200 bg-[var(--error-bg)] p-4 text-sm text-[var(--error)]">{error}</p>
       ) : patient ? (

@@ -7,7 +7,7 @@ import SlotViewer from "@/components/dashboard/doctors/SlotViewer";
 import Badge from "@/components/ui/Badge";
 import Button from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
-import Spinner from "@/components/ui/Spinner";
+import { SkeletonCard, SkeletonList } from "@/components/ui/Skeleton";
 import { useAuth } from "@/hooks/useAuth";
 import api from "@/lib/api";
 import { parseApiError } from "@/lib/auth";
@@ -114,8 +114,9 @@ export default function MySchedulePage() {
       />
 
       {loading && (
-        <div className="flex items-center gap-2 rounded-2xl border border-white/70 bg-white/75 px-4 py-3 text-sm text-[#55717b] shadow-sm backdrop-blur-xl">
-          <Spinner size="sm" /> Loading schedule tools...
+        <div className="grid gap-4">
+          <SkeletonCard />
+          <SkeletonList rows={4} className="grid-cols-1 md:grid-cols-2" />
         </div>
       )}
 

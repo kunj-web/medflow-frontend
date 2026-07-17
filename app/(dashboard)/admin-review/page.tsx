@@ -6,6 +6,7 @@ import Badge from "@/components/ui/Badge";
 import Button from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import Input from "@/components/ui/Input";
+import { SkeletonList } from "@/components/ui/Skeleton";
 import api from "@/lib/api";
 import { parseApiError } from "@/lib/auth";
 import {
@@ -241,7 +242,7 @@ export default function AdminReviewPage() {
 
       {loading ? (
         <Card padding="lg" className="border-white/70 bg-white/72 text-sm text-[#55717b] shadow-[0_18px_45px_rgba(24,86,115,0.12)] backdrop-blur-xl">
-          Loading pending doctors...
+          <SkeletonList rows={3} />
         </Card>
       ) : doctors.length === 0 ? (
         <Card padding="lg" className="flex flex-col items-center justify-center gap-3 border-white/70 bg-white/72 py-14 text-center shadow-[0_18px_45px_rgba(24,86,115,0.12)] backdrop-blur-xl">

@@ -6,7 +6,7 @@ import { parseApiError } from "@/lib/auth";
 import { cn, formatTime } from "@/lib/utils";
 import Button from "@/components/ui/Button";
 import Input from "@/components/ui/Input";
-import Spinner from "@/components/ui/Spinner";
+import { SkeletonCard, SkeletonList } from "@/components/ui/Skeleton";
 import { AppointmentCreate, AppointmentType } from "@/types/appointment";
 import { PaginatedResponse } from "@/types/common";
 import { Doctor, Slot } from "@/types/doctor";
@@ -191,9 +191,7 @@ export default function BookModal({ onSuccess, onClose }: BookModalProps) {
                   Doctor <span className="text-[var(--error)]">*</span>
                 </label>
                 {doctorsLoading ? (
-                  <div className="flex items-center gap-2 text-xs text-[var(--text-muted)]">
-                    <Spinner size="sm" /> Loading doctors...
-                  </div>
+                  <SkeletonCard />
                 ) : (
                   <select
                     value={selectedDoctor?.id ?? ""}
@@ -286,9 +284,7 @@ export default function BookModal({ onSuccess, onClose }: BookModalProps) {
               </p>
 
               {slotsLoading && (
-                <div className="flex items-center gap-2 py-8 justify-center text-sm text-[var(--text-muted)]">
-                  <Spinner size="sm" /> Loading slots...
-                </div>
+                <SkeletonList rows={4} />
               )}
 
               {!slotsLoading && slotsError && (
