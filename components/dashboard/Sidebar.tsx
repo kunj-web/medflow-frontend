@@ -84,6 +84,18 @@ const NAV: NavItem[] = [
     ),
   },
   {
+    label: "Audit Trail",
+    href: "/audit-trail",
+    roles: [UserRole.ADMIN],
+    icon: (
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M9 12l2 2 4-4"/>
+        <path d="M21 12a9 9 0 11-3-6.7"/>
+        <path d="M21 3v6h-6"/>
+      </svg>
+    ),
+  },
+  {
     label: "Patients",
     href: "/patients",
     roles: [UserRole.ADMIN],
