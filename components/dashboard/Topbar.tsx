@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { useAuth } from "@/hooks/useAuth";
 import { logout } from "@/lib/auth";
 import { cn, getInitials } from "@/lib/utils";
+import NotificationBell from "@/components/dashboard/NotificationBell";
 
 interface TopbarProps {
   title?: string;
@@ -39,7 +40,10 @@ export default function Topbar({ title }: TopbarProps) {
         )}
       </div>
 
-      <div className="relative">
+      <div className="flex items-center gap-3">
+        <NotificationBell />
+
+        <div className="relative">
         <button
           onClick={() => setDropdownOpen((v) => !v)}
           className="flex items-center gap-2 px-2 py-1.5 rounded-[var(--radius-md)] hover:bg-[var(--gray-100)] transition-colors"
@@ -111,6 +115,7 @@ export default function Topbar({ title }: TopbarProps) {
             </div>
           </>
         )}
+        </div>
       </div>
     </header>
   );
