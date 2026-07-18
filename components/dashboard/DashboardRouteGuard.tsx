@@ -13,6 +13,7 @@ interface DashboardRouteGuardProps {
 const ROUTE_RULES: { prefix: string; roles: UserRole[]; superAdminOnly?: boolean }[] = [
   { prefix: "/admins", roles: [UserRole.ADMIN], superAdminOnly: true },
   { prefix: "/admin-review", roles: [UserRole.ADMIN] },
+  { prefix: "/audit-trail", roles: [UserRole.ADMIN] },
   { prefix: "/my-schedule", roles: [UserRole.DOCTOR] },
   { prefix: "/doctors", roles: [UserRole.ADMIN] },
   { prefix: "/invoices", roles: [UserRole.ADMIN] },
