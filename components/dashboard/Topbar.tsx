@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { useAuth } from "@/hooks/useAuth";
 import { logout } from "@/lib/auth";
 import { cn, getInitials } from "@/lib/utils";
+import GlobalSearch from "@/components/dashboard/GlobalSearch";
 import NotificationBell from "@/components/dashboard/NotificationBell";
 
 interface TopbarProps {
@@ -31,8 +32,8 @@ export default function Topbar({ title }: TopbarProps) {
   const roleLabel = user?.role?.replace("_", " ") ?? "-";
 
   return (
-    <header className="h-14 shrink-0 flex items-center justify-between px-6 border-b border-[var(--border)] bg-white sticky top-0 z-30">
-      <div className="flex items-center gap-2">
+    <header className="h-14 shrink-0 flex items-center justify-between gap-4 px-6 border-b border-[var(--border)] bg-white sticky top-0 z-30">
+      <div className="flex shrink-0 items-center gap-2">
         {title ? (
           <h1 className="text-sm font-semibold text-[var(--text-primary)]">{title}</h1>
         ) : (
@@ -40,7 +41,9 @@ export default function Topbar({ title }: TopbarProps) {
         )}
       </div>
 
-      <div className="flex items-center gap-3">
+      <GlobalSearch />
+
+      <div className="flex shrink-0 items-center gap-3">
         <NotificationBell />
 
         <div className="relative">

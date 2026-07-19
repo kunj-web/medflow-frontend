@@ -16,7 +16,7 @@ const ROUTE_RULES: { prefix: string; roles: UserRole[]; superAdminOnly?: boolean
   { prefix: "/audit-trail", roles: [UserRole.ADMIN] },
   { prefix: "/my-schedule", roles: [UserRole.DOCTOR] },
   { prefix: "/doctors", roles: [UserRole.ADMIN] },
-  { prefix: "/invoices", roles: [UserRole.ADMIN] },
+  { prefix: "/invoices", roles: [UserRole.ADMIN, UserRole.PATIENT] },
   { prefix: "/patients", roles: [UserRole.ADMIN] },
   { prefix: "/appointments", roles: [UserRole.ADMIN, UserRole.DOCTOR, UserRole.PATIENT] },
   { prefix: "/dashboard", roles: [UserRole.ADMIN, UserRole.DOCTOR, UserRole.PATIENT] },
