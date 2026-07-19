@@ -35,6 +35,7 @@ export default function AppointmentsPage() {
   const [page, setPage] = useState(1);
 
   const [appointments, setAppointments] = useState<Appointment[]>([]);
+  const [highlightAppointmentId, setHighlightAppointmentId] = useState("");
   const [totalPages, setTotalPages] = useState(1);
   const [loading, setLoading] = useState(true);
   const [fetchError, setFetchError] = useState("");
@@ -100,6 +101,34 @@ export default function AppointmentsPage() {
   useEffect(() => {
     fetchAppointments();
   }, [fetchAppointments]);
+
+  useEffect(() => {
+    function syncHighlightedAppointment() {
+      const id = window.location.hash.replace("#", "");
+      setHighlightAppointmentId(id);
+      if (!id) return;
+
+      api
+        .get<Appointment>(`/api/v1/appointments/${id}`)
+        .then(({ data }) => {
+          setAppointments((current) => {
+            if (current.some((item) => item.id === data.id)) return current;
+            return [data, ...current];
+          });
+          window.setTimeout(() => {
+            document.getElementById(data.id)?.scrollIntoView({
+              behavior: "smooth",
+              block: "center",
+            });
+          }, 150);
+        })
+        .catch(() => undefined);
+    }
+
+    syncHighlightedAppointment();
+    window.addEventListener("hashchange", syncHighlightedAppointment);
+    return () => window.removeEventListener("hashchange", syncHighlightedAppointment);
+  }, []);
 
   function handleStatusChange(status: AppointmentStatus | "ALL") {
     setActiveStatus(status);
@@ -284,6 +313,7 @@ export default function AppointmentsPage() {
           isPatient={isPatient}
           totalPages={totalPages}
           currentPage={page}
+          highlightAppointmentId={highlightAppointmentId}
           onPageChange={setPage}
           onCancel={setCancelTarget}
         />

@@ -7,6 +7,7 @@ import {
   CalendarCheck,
   CheckCheck,
   Clock,
+  CreditCard,
   RefreshCw,
   UserPlus,
   XCircle,
@@ -15,6 +16,8 @@ import { SkeletonList } from "@/components/ui/Skeleton";
 import api from "@/lib/api";
 import { parseApiError } from "@/lib/auth";
 import { cn, formatDateTime } from "@/lib/utils";
+
+type NotificationCategory = "all" | "unread" | "appointments" | "admin" | "billing";
 
 interface NotificationItem {
   id: string;
@@ -32,25 +35,61 @@ interface NotificationResponse {
   unread_count: number;
 }
 
+const CATEGORY_FILTERS: { label: string; value: NotificationCategory }[] = [
+  { label: "All", value: "all" },
+  { label: "Unread", value: "unread" },
+  { label: "Appointments", value: "appointments" },
+  { label: "Admin", value: "admin" },
+  { label: "Billing", value: "billing" },
+];
+
+function categoryFor(notification: NotificationItem): NotificationCategory {
+  const category = notification.data?.category;
+  if (category === "appointments" || category === "admin" || category === "billing") {
+    return category;
+  }
+  if (notification.type.startsWith("appointment_")) return "appointments";
+  if (notification.type.startsWith("invoice_")) return "billing";
+  if (notification.data?.event === "pending_doctor_review") return "admin";
+  return "all";
+}
+
 function notificationHref(notification: NotificationItem) {
   if (notification.data?.href) return notification.data.href;
-  if (notification.data?.appointment_id) return "/appointments";
+  if (notification.data?.invoice_id) return `/invoices#${notification.data.invoice_id}`;
+  if (notification.data?.appointment_id) return `/appointments#${notification.data.appointment_id}`;
   return null;
 }
 
-function NotificationIcon({ type, event }: { type: string; event?: string }) {
+function NotificationIcon({ notification }: { notification: NotificationItem }) {
   const className = "h-4 w-4";
+  const category = categoryFor(notification);
 
-  if (event === "pending_doctor_review") return <UserPlus className={className} />;
-  if (type === "appointment_booked") return <CalendarCheck className={className} />;
-  if (type === "appointment_cancelled") return <XCircle className={className} />;
-  if (type === "appointment_reminder") return <Clock className={className} />;
+  if (notification.data?.event === "pending_doctor_review") return <UserPlus className={className} />;
+  if (notification.type === "appointment_booked") return <CalendarCheck className={className} />;
+  if (notification.type === "appointment_cancelled") return <XCircle className={className} />;
+  if (notification.type === "appointment_reminder") return <Clock className={className} />;
+  if (category === "billing") return <CreditCard className={className} />;
   return <Bell className={className} />;
+}
+
+function detailChips(notification: NotificationItem) {
+  const details = [
+    notification.data?.token_number ? `Token #${notification.data.token_number}` : null,
+    notification.data?.doctor_name ?? null,
+    notification.data?.patient_name ?? null,
+    notification.data?.invoice_number ? `Invoice ${notification.data.invoice_number}` : null,
+    notification.data?.total_amount ? `Amount ${notification.data.total_amount}` : null,
+    notification.data?.reason ? `Reason: ${notification.data.reason}` : null,
+  ];
+
+  return details.filter(Boolean) as string[];
 }
 
 export default function NotificationBell() {
   const [open, setOpen] = useState(false);
   const [notifications, setNotifications] = useState<NotificationItem[]>([]);
+  const [activeCategory, setActiveCategory] = useState<NotificationCategory>("all");
   const [unreadCount, setUnreadCount] = useState(0);
   const [loading, setLoading] = useState(false);
   const [marking, setMarking] = useState(false);
@@ -61,7 +100,7 @@ export default function NotificationBell() {
     setError("");
     try {
       const { data } = await api.get<NotificationResponse>("/api/v1/notifications/me", {
-        params: { limit: 12 },
+        params: { limit: 30 },
       });
       setNotifications(data.data ?? []);
       setUnreadCount(data.unread_count ?? 0);
@@ -82,10 +121,32 @@ export default function NotificationBell() {
     if (open) fetchNotifications();
   }, [fetchNotifications, open]);
 
+  const filteredNotifications = useMemo(() => {
+    if (activeCategory === "all") return notifications;
+    if (activeCategory === "unread") {
+      return notifications.filter((notification) => !notification.is_read);
+    }
+    return notifications.filter((notification) => categoryFor(notification) === activeCategory);
+  }, [activeCategory, notifications]);
+
   const latestUnread = useMemo(
-    () => notifications.filter((notification) => !notification.is_read).length,
-    [notifications]
+    () => filteredNotifications.filter((notification) => !notification.is_read).length,
+    [filteredNotifications]
   );
+
+  async function markOneRead(notification: NotificationItem) {
+    if (notification.is_read) return;
+    setNotifications((current) =>
+      current.map((item) => (item.id === notification.id ? { ...item, is_read: true } : item))
+    );
+    setUnreadCount((current) => Math.max(0, current - 1));
+    try {
+      await api.post(`/api/v1/notifications/${notification.id}/read`);
+    } catch (err) {
+      setError(parseApiError(err));
+      fetchNotifications();
+    }
+  }
 
   async function markAllRead() {
     setMarking(true);
@@ -122,7 +183,7 @@ export default function NotificationBell() {
       {open && (
         <>
           <div className="fixed inset-0 z-30" onClick={() => setOpen(false)} />
-          <div className="absolute right-0 top-full z-40 mt-2 w-[min(380px,calc(100vw-32px))] overflow-hidden rounded-[24px] border border-white/70 bg-[#f8fcfd]/92 shadow-[0_24px_70px_rgba(24,86,115,0.18)] backdrop-blur-2xl">
+          <div className="absolute right-0 top-full z-40 mt-2 w-[min(420px,calc(100vw-32px))] overflow-hidden rounded-[24px] border border-white/70 bg-[#f8fcfd]/92 shadow-[0_24px_70px_rgba(24,86,115,0.18)] backdrop-blur-2xl">
             <div className="border-b border-[#d8edf3] bg-[#dceff5]/70 px-4 py-4">
               <div className="flex items-start justify-between gap-3">
                 <div>
@@ -154,9 +215,27 @@ export default function NotificationBell() {
                   </button>
                 </div>
               </div>
+
+              <div className="mt-4 flex gap-2 overflow-x-auto pb-1">
+                {CATEGORY_FILTERS.map((item) => (
+                  <button
+                    key={item.value}
+                    type="button"
+                    onClick={() => setActiveCategory(item.value)}
+                    className={cn(
+                      "shrink-0 rounded-full border px-3 py-1.5 text-xs font-medium transition",
+                      activeCategory === item.value
+                        ? "border-[#1d9aaa] bg-[#1d9aaa] text-white shadow-sm"
+                        : "border-[#c8e3ea] bg-white/70 text-[#456773] hover:border-[#7fc8d4] hover:text-[#062f3d]"
+                    )}
+                  >
+                    {item.label}
+                  </button>
+                ))}
+              </div>
             </div>
 
-            <div className="max-h-[430px] overflow-y-auto p-3">
+            <div className="max-h-[460px] overflow-y-auto p-3">
               {error && (
                 <div className="mb-3 rounded-2xl border border-red-200 bg-[var(--error-bg)] px-3 py-2 text-xs text-[var(--error)]">
                   {error}
@@ -165,17 +244,18 @@ export default function NotificationBell() {
 
               {loading ? (
                 <SkeletonList rows={3} />
-              ) : notifications.length === 0 ? (
+              ) : filteredNotifications.length === 0 ? (
                 <div className="rounded-2xl border border-dashed border-[#c8e3ea] bg-white/55 px-4 py-8 text-center">
-                  <p className="text-sm font-medium text-[#062f3d]">No notifications yet</p>
+                  <p className="text-sm font-medium text-[#062f3d]">No notifications here</p>
                   <p className="mt-1 text-xs text-[#55717b]">
-                    Bookings, cancellations, and admin review updates will appear here.
+                    New bookings, cancellations, billing, and admin updates will appear here.
                   </p>
                 </div>
               ) : (
                 <div className="space-y-2">
-                  {notifications.map((notification) => {
+                  {filteredNotifications.map((notification) => {
                     const href = notificationHref(notification);
+                    const chips = detailChips(notification);
                     const content = (
                       <div
                         className={cn(
@@ -193,10 +273,7 @@ export default function NotificationBell() {
                               : "bg-[#bfe0f2] text-[#0c6983]"
                           )}
                         >
-                          <NotificationIcon
-                            type={notification.type}
-                            event={notification.data?.event}
-                          />
+                          <NotificationIcon notification={notification} />
                         </div>
                         <div className="min-w-0 flex-1">
                           <div className="flex items-start justify-between gap-2">
@@ -210,6 +287,18 @@ export default function NotificationBell() {
                           <p className="mt-1 line-clamp-2 text-xs leading-5 text-[#55717b]">
                             {notification.message ?? notification.body ?? ""}
                           </p>
+                          {chips.length > 0 && (
+                            <div className="mt-2 flex flex-wrap gap-1.5">
+                              {chips.slice(0, 3).map((chip) => (
+                                <span
+                                  key={`${notification.id}-${chip}`}
+                                  className="rounded-full border border-[#d8edf3] bg-white/70 px-2 py-0.5 text-[10px] font-medium text-[#456773]"
+                                >
+                                  {chip}
+                                </span>
+                              ))}
+                            </div>
+                          )}
                           <p className="mt-2 text-[11px] font-medium text-[#6a8791]">
                             {formatDateTime(notification.created_at)}
                           </p>
@@ -221,13 +310,23 @@ export default function NotificationBell() {
                       <Link
                         key={notification.id}
                         href={href}
-                        onClick={() => setOpen(false)}
+                        onClick={() => {
+                          markOneRead(notification);
+                          setOpen(false);
+                        }}
                         className="block"
                       >
                         {content}
                       </Link>
                     ) : (
-                      <div key={notification.id}>{content}</div>
+                      <button
+                        key={notification.id}
+                        type="button"
+                        onClick={() => markOneRead(notification)}
+                        className="block w-full text-left"
+                      >
+                        {content}
+                      </button>
                     );
                   })}
                 </div>

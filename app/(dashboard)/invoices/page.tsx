@@ -126,6 +126,18 @@ export default function InvoicesPage() {
     setInvoices((current) => current.map((item) => (item.id === data.id ? data : item)));
   }
 
+  useEffect(() => {
+    function openInvoiceFromHash() {
+      const invoiceId = window.location.hash.replace("#", "");
+      if (!invoiceId) return;
+      refreshSelected(invoiceId).catch(() => undefined);
+    }
+
+    openInvoiceFromHash();
+    window.addEventListener("hashchange", openInvoiceFromHash);
+    return () => window.removeEventListener("hashchange", openInvoiceFromHash);
+  }, []);
+
   async function issueInvoice(invoice: Invoice) {
     setActionLoading(true);
     setActionError("");
