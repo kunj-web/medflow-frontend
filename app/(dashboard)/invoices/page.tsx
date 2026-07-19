@@ -18,10 +18,11 @@ import Button from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import Input from "@/components/ui/Input";
 import { SkeletonList } from "@/components/ui/Skeleton";
+import { useAuth } from "@/hooks/useAuth";
 import api from "@/lib/api";
 import { parseApiError } from "@/lib/auth";
 import { cn, formatCurrency, formatDate, formatDateTime } from "@/lib/utils";
-import { PaginatedResponse } from "@/types/common";
+import { PaginatedResponse, UserRole } from "@/types/common";
 import {
   Invoice,
   InvoiceCreate,
@@ -58,6 +59,8 @@ const DEFAULT_LINE_ITEM: LineItem = {
 };
 
 export default function InvoicesPage() {
+  const { user } = useAuth();
+  const canManageInvoices = user?.role === UserRole.ADMIN;
   const [invoices, setInvoices] = useState<Invoice[]>([]);
   const [selectedInvoice, setSelectedInvoice] = useState<Invoice | null>(null);
   const [status, setStatus] = useState<InvoiceStatus | "ALL">("ALL");
@@ -179,14 +182,16 @@ export default function InvoicesPage() {
         title="Invoices"
         subtitle={subtitle}
         actions={
-          <Button
-            variant="primary"
-            size="sm"
-            onClick={() => setCreateOpen(true)}
-            leftIcon={<FilePlus2 size={14} />}
-          >
-            Create invoice
-          </Button>
+          canManageInvoices ? (
+            <Button
+              variant="primary"
+              size="sm"
+              onClick={() => setCreateOpen(true)}
+              leftIcon={<FilePlus2 size={14} />}
+            >
+              Create invoice
+            </Button>
+          ) : undefined
         }
       />
 
@@ -194,14 +199,17 @@ export default function InvoicesPage() {
         <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_360px] lg:items-end">
           <div>
             <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[#24708a]">
-              Admin billing
+              {canManageInvoices ? "Admin billing" : "Patient billing"}
             </p>
             <h2 className="mt-3 max-w-2xl text-3xl font-semibold tracking-normal text-[#062f3d] sm:text-4xl">
-              Manage invoices, payment status, and balances.
+              {canManageInvoices
+                ? "Manage invoices, payment status, and balances."
+                : "Review your invoices, payments, and balances."}
             </h2>
             <p className="mt-3 max-w-xl text-sm leading-6 text-[#456773]">
-              Create invoices for appointments, issue drafts, record payments,
-              and track outstanding balances in one place.
+              {canManageInvoices
+                ? "Create invoices for appointments, issue drafts, record payments, and track outstanding balances in one place."
+                : "Search and open invoice records linked to your appointments."}
             </p>
           </div>
           <div className="grid grid-cols-3 gap-3">
@@ -358,7 +366,7 @@ export default function InvoicesPage() {
         )}
       </Card>
 
-      {createOpen && (
+      {createOpen && canManageInvoices && (
         <CreateInvoiceModal
           onClose={() => setCreateOpen(false)}
           onCreated={() => {
@@ -375,6 +383,7 @@ export default function InvoicesPage() {
           actionLoading={actionLoading}
           payOpen={payOpen}
           setPayOpen={setPayOpen}
+          canManage={canManageInvoices}
           onClose={() => setSelectedInvoice(null)}
           onIssue={issueInvoice}
           onCancel={cancelInvoice}
@@ -550,6 +559,7 @@ function InvoiceDrawer({
   actionLoading,
   payOpen,
   setPayOpen,
+  canManage,
   onClose,
   onIssue,
   onCancel,
@@ -560,15 +570,16 @@ function InvoiceDrawer({
   actionLoading: boolean;
   payOpen: boolean;
   setPayOpen: (open: boolean) => void;
+  canManage: boolean;
   onClose: () => void;
   onIssue: (invoice: Invoice) => void;
   onCancel: (invoice: Invoice) => void;
   onPaid: () => void;
 }) {
   const badge = STATUS_BADGE[invoice.status];
-  const canIssue = invoice.status === InvoiceStatus.DRAFT;
-  const canPay = invoice.status === InvoiceStatus.ISSUED || invoice.status === InvoiceStatus.PARTIALLY_PAID;
-  const canCancel = invoice.status !== InvoiceStatus.PAID && invoice.status !== InvoiceStatus.CANCELLED;
+  const canIssue = canManage && invoice.status === InvoiceStatus.DRAFT;
+  const canPay = canManage && (invoice.status === InvoiceStatus.ISSUED || invoice.status === InvoiceStatus.PARTIALLY_PAID);
+  const canCancel = canManage && invoice.status !== InvoiceStatus.PAID && invoice.status !== InvoiceStatus.CANCELLED;
 
   return (
     <div className="fixed inset-0 z-50 flex justify-end bg-black/35 backdrop-blur-sm" onClick={(event) => event.target === event.currentTarget && onClose()}>
