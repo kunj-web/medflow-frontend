@@ -26,6 +26,7 @@ interface AppointmentTableProps {
   isPatient: boolean;
   totalPages: number;
   currentPage: number;
+  highlightAppointmentId?: string;
   onPageChange: (page: number) => void;
   onCancel: (appointment: Appointment) => void;
 }
@@ -38,6 +39,7 @@ export default function AppointmentTable({
   isPatient,
   totalPages,
   currentPage,
+  highlightAppointmentId,
   onPageChange,
   onCancel,
 }: AppointmentTableProps) {
@@ -104,8 +106,10 @@ export default function AppointmentTable({
               return (
                 <Fragment key={appt.id}>
                 <tr
+                  id={appt.id}
                   className={cn(
                     "border-b border-[#d8edf3] transition-colors hover:bg-[#f8fcfd]",
+                    highlightAppointmentId === appt.id && "bg-[#d9edbd]/45 ring-2 ring-inset ring-[#9ac66f]",
                     i === rows.length - 1 && !appt.cancellation_reason && "border-b-0"
                   )}
                 >
