@@ -13,9 +13,11 @@ import {
   XCircle,
 } from "lucide-react";
 import { SkeletonList } from "@/components/ui/Skeleton";
+import { useAuth } from "@/hooks/useAuth";
 import api from "@/lib/api";
 import { parseApiError } from "@/lib/auth";
 import { cn, formatDateTime } from "@/lib/utils";
+import { UserRole } from "@/types/common";
 
 type NotificationCategory = "all" | "unread" | "appointments" | "admin" | "billing";
 
@@ -87,6 +89,7 @@ function detailChips(notification: NotificationItem) {
 }
 
 export default function NotificationBell() {
+  const { user } = useAuth();
   const [open, setOpen] = useState(false);
   const [notifications, setNotifications] = useState<NotificationItem[]>([]);
   const [activeCategory, setActiveCategory] = useState<NotificationCategory>("all");
@@ -120,6 +123,23 @@ export default function NotificationBell() {
   useEffect(() => {
     if (open) fetchNotifications();
   }, [fetchNotifications, open]);
+
+  const visibleCategoryFilters = useMemo(() => {
+    const allowedByRole: Record<UserRole, NotificationCategory[]> = {
+      [UserRole.ADMIN]: ["all", "unread", "appointments", "admin", "billing"],
+      [UserRole.DOCTOR]: ["all", "unread", "appointments"],
+      [UserRole.PATIENT]: ["all", "unread", "appointments", "billing"],
+    };
+
+    const allowed = user?.role ? allowedByRole[user.role] : ["all", "unread"];
+    return CATEGORY_FILTERS.filter((item) => allowed.includes(item.value));
+  }, [user?.role]);
+
+  useEffect(() => {
+    if (!visibleCategoryFilters.some((item) => item.value === activeCategory)) {
+      setActiveCategory("all");
+    }
+  }, [activeCategory, visibleCategoryFilters]);
 
   const filteredNotifications = useMemo(() => {
     if (activeCategory === "all") return notifications;
@@ -217,7 +237,7 @@ export default function NotificationBell() {
               </div>
 
               <div className="mt-4 flex gap-2 overflow-x-auto pb-1">
-                {CATEGORY_FILTERS.map((item) => (
+                {visibleCategoryFilters.map((item) => (
                   <button
                     key={item.value}
                     type="button"
