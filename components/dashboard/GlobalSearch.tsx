@@ -36,6 +36,10 @@ interface SearchResponse {
   data: SearchResult[];
 }
 
+interface RecentSearchItem extends SearchResult {
+  viewed_at: number;
+}
+
 interface QuickAction {
   id: QuickActionKind;
   title: string;
@@ -118,6 +122,8 @@ const QUICK_ACTIONS: Record<UserRole, QuickAction[]> = {
   ],
 };
 
+const RECENT_LIMIT = 6;
+
 function resultIcon(kind: SearchKind) {
   const className = "h-4 w-4";
   if (kind === "appointment") return <CalendarDays className={className} />;
@@ -151,11 +157,13 @@ export default function GlobalSearch() {
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const [results, setResults] = useState<SearchResult[]>([]);
+  const [recentItems, setRecentItems] = useState<RecentSearchItem[]>([]);
   const [error, setError] = useState("");
   const containerRef = useRef<HTMLDivElement | null>(null);
   const inputRef = useRef<HTMLInputElement | null>(null);
 
   const role = user?.role as UserRole | undefined;
+  const recentKey = user?.user_id ? `medflow_recent_search:${user.user_id}` : null;
   const trimmedQuery = query.trim();
 
   const placeholder = useMemo(() => {
@@ -170,6 +178,21 @@ export default function GlobalSearch() {
     if (user?.is_super_admin) return actions;
     return actions.filter((action) => action.id !== "admins");
   }, [role, user?.is_super_admin]);
+
+  const loadRecentItems = useCallback(() => {
+    if (!recentKey || typeof window === "undefined") {
+      setRecentItems([]);
+      return;
+    }
+
+    try {
+      const raw = window.localStorage.getItem(recentKey);
+      const parsed = raw ? (JSON.parse(raw) as RecentSearchItem[]) : [];
+      setRecentItems(Array.isArray(parsed) ? parsed.slice(0, RECENT_LIMIT) : []);
+    } catch {
+      setRecentItems([]);
+    }
+  }, [recentKey]);
 
   const search = useCallback(async () => {
     if (!role || trimmedQuery.length < 2) {
@@ -212,6 +235,10 @@ export default function GlobalSearch() {
   }, []);
 
   useEffect(() => {
+    loadRecentItems();
+  }, [loadRecentItems]);
+
+  useEffect(() => {
     function handleShortcut(event: KeyboardEvent) {
       const target = event.target as HTMLElement | null;
       const isTyping =
@@ -236,6 +263,24 @@ export default function GlobalSearch() {
     setOpen(false);
     setQuery("");
     setResults([]);
+  }
+
+  function saveRecentItem(result: SearchResult) {
+    if (!recentKey || typeof window === "undefined") return;
+
+    const nextItem: RecentSearchItem = {
+      ...result,
+      viewed_at: Date.now(),
+    };
+    const nextItems = [
+      nextItem,
+      ...recentItems.filter(
+        (item) => !(item.kind === result.kind && item.id === result.id)
+      ),
+    ].slice(0, RECENT_LIMIT);
+
+    setRecentItems(nextItems);
+    window.localStorage.setItem(recentKey, JSON.stringify(nextItems));
   }
 
   return (
@@ -325,6 +370,44 @@ export default function GlobalSearch() {
                     </div>
                   </div>
                 )}
+
+                {recentItems.length > 0 && (
+                  <div>
+                    <p className="mb-2 px-1 text-xs font-semibold uppercase tracking-[0.14em] text-[#24708a]">
+                      Recently viewed
+                    </p>
+                    <div className="space-y-2">
+                      {recentItems.map((item) => (
+                        <Link
+                          key={`recent-${item.kind}-${item.id}`}
+                          href={item.href}
+                          onClick={closeAndClear}
+                          className="group flex items-center gap-3 rounded-2xl border border-[#d8edf3] bg-white/62 px-3 py-3 transition hover:border-[#9bd4dd] hover:bg-[#dceff5]/75"
+                        >
+                          <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-2xl border border-white/80 bg-[#bfe0f2]/80 text-[#0c6983]">
+                            {resultIcon(item.kind)}
+                          </div>
+                          <div className="min-w-0 flex-1">
+                            <div className="flex items-center gap-2">
+                              <p className="truncate text-sm font-semibold text-[#062f3d]">
+                                {item.title}
+                              </p>
+                              <span className="shrink-0 rounded-full border border-[#d8edf3] bg-[#f8fcfd] px-2 py-0.5 text-[10px] font-medium text-[#456773]">
+                                {kindLabel(item.kind)}
+                              </span>
+                            </div>
+                            <p className="mt-1 truncate text-xs text-[#55717b]">
+                              {item.subtitle}
+                            </p>
+                          </div>
+                          <p className="hidden max-w-[150px] truncate text-right text-[11px] font-medium text-[#6a8791] lg:block">
+                            {item.meta}
+                          </p>
+                        </Link>
+                      ))}
+                    </div>
+                  </div>
+                )}
               </div>
             ) : trimmedQuery.length < 2 ? (
               <div className="rounded-2xl border border-dashed border-[#c8e3ea] bg-white/55 px-4 py-6 text-center text-sm text-[#55717b]">
@@ -356,7 +439,10 @@ export default function GlobalSearch() {
                   <Link
                     key={`${result.kind}-${result.id}`}
                     href={result.href}
-                    onClick={closeAndClear}
+                    onClick={() => {
+                      saveRecentItem(result);
+                      closeAndClear();
+                    }}
                     className="group flex items-center gap-3 rounded-2xl border border-[#d8edf3] bg-white/62 px-3 py-3 transition hover:border-[#9bd4dd] hover:bg-[#dceff5]/75"
                   >
                     <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl border border-white/80 bg-[#bfe0f2]/80 text-[#0c6983]">
