@@ -56,6 +56,14 @@ function formatWorkplace(doctor: AdminDoctorReview) {
     .join(", ");
 }
 
+function formatScheduleTime(value: string) {
+  return value.slice(0, 5);
+}
+
+function formatScheduleDay(value: string) {
+  return value.slice(0, 3);
+}
+
 export default function AdminReviewPage() {
   const [doctors, setDoctors] = useState<AdminDoctorReview[]>([]);
   const [hospitals, setHospitals] = useState<PublicHospitalOption[]>([]);
@@ -311,6 +319,51 @@ export default function AdminReviewPage() {
                       {doctor.gender.replaceAll("_", " ")}
                     </p>
                   </div>
+                </div>
+
+                <div className="rounded-2xl border border-[#d8edf3] bg-[#f8fcfd]/78 p-4">
+                  <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
+                    <div>
+                      <p className="text-sm font-semibold text-[#062f3d]">
+                        Requested availability
+                      </p>
+                      <p className="mt-1 text-xs text-[#55717b]">
+                        Submitted during doctor sign-up and used after approval.
+                      </p>
+                    </div>
+                    <Badge variant={doctor.schedules.length > 0 ? "info" : "warning"} dot>
+                      {doctor.schedules.length > 0
+                        ? `${doctor.schedules.length} active day${doctor.schedules.length === 1 ? "" : "s"}`
+                        : "Default pending"}
+                    </Badge>
+                  </div>
+
+                  {doctor.schedules.length === 0 ? (
+                    <p className="mt-3 text-xs text-[#55717b]">
+                      No custom schedule was submitted. Approval will use the default
+                      09:00-17:00, 10-minute schedule.
+                    </p>
+                  ) : (
+                    <div className="mt-3 grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-3">
+                      {doctor.schedules.map((schedule) => (
+                        <div
+                          key={schedule.id}
+                          className="rounded-xl border border-[#d8edf3] bg-white/70 px-3 py-2 text-xs"
+                        >
+                          <p className="font-semibold capitalize text-[#062f3d]">
+                            {formatScheduleDay(schedule.day_of_week)}
+                          </p>
+                          <p className="mt-1 font-mono text-[#456773]">
+                            {formatScheduleTime(schedule.start_time)}-
+                            {formatScheduleTime(schedule.end_time)}
+                          </p>
+                          <p className="mt-1 text-[#55717b]">
+                            {schedule.slot_duration_minutes}-minute slots
+                          </p>
+                        </div>
+                      ))}
+                    </div>
+                  )}
                 </div>
 
                 {needsHospitalDecision && (

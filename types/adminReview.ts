@@ -1,5 +1,13 @@
 import { AccountStatus, WorkType } from "./auth";
-import { Gender } from "./common";
+import { DayOfWeek, Gender } from "./common";
+
+export interface AdminDoctorReviewSchedule {
+  id: string;
+  day_of_week: DayOfWeek;
+  start_time: string;
+  end_time: string;
+  slot_duration_minutes: number;
+}
 
 export interface AdminDoctorReview {
   id: string;
@@ -24,6 +32,7 @@ export interface AdminDoctorReview {
   pending_hospital_name: string | null;
   pending_hospital_city: string | null;
   pending_hospital_state: string | null;
+  schedules: AdminDoctorReviewSchedule[];
   created_at: string;
 }
 
