@@ -7,6 +7,8 @@ import Input from "@/components/ui/Input";
 import { SkeletonList } from "@/components/ui/Skeleton";
 import { parseApiError } from "@/lib/auth";
 import api from "@/lib/api";
+import { PaginatedResponse } from "@/types/common";
+import { Appointment, AppointmentStatus } from "@/types/appointment";
 import type { Doctor, DoctorLeave, Slot } from "@/types/doctor";
 
 interface SlotViewerProps {
@@ -40,6 +42,8 @@ export default function SlotViewer({ doctor, onClose }: SlotViewerProps) {
   const [date, setDate] = useState<string>(tomorrowString());
   const [slots, setSlots] = useState<Slot[]>([]);
   const [leaves, setLeaves] = useState<DoctorLeave[]>([]);
+  const [appointments, setAppointments] = useState<Appointment[]>([]);
+  const [closureReason, setClosureReason] = useState("");
   const [loading, setLoading] = useState(false);
   const [actionLoading, setActionLoading] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -48,11 +52,23 @@ export default function SlotViewer({ doctor, onClose }: SlotViewerProps) {
     () => leaves.find((leave) => leave.leave_date === date) ?? null,
     [date, leaves]
   );
+  const affectedAppointments = useMemo(
+    () =>
+      appointments.filter(
+        (appointment) =>
+          appointment.doctor_id === doctor.id &&
+          [AppointmentStatus.SCHEDULED, AppointmentStatus.CONFIRMED].includes(
+            appointment.status
+          )
+      ),
+    [appointments, doctor.id]
+  );
 
   const load = useCallback(async () => {
     if (!date) return;
     if (date < minimumDate) {
       setSlots([]);
+      setAppointments([]);
       setError("Slot management is available from tomorrow onward.");
       return;
     }
@@ -60,12 +76,16 @@ export default function SlotViewer({ doctor, onClose }: SlotViewerProps) {
     setError(null);
     setSlots([]);
     try {
-      const [slotsRes, leavesRes] = await Promise.all([
+      const [slotsRes, leavesRes, appointmentsRes] = await Promise.all([
         api.get<Slot[]>(`/api/v1/doctors/${doctor.id}/slots`, { params: { date } }),
         api.get<DoctorLeave[]>(`/api/v1/doctors/${doctor.id}/leaves`),
+        api.get<PaginatedResponse<Appointment>>("/api/v1/appointments/", {
+          params: { date, page: 1, page_size: 100 },
+        }),
       ]);
       setSlots(slotsRes.data);
       setLeaves(leavesRes.data);
+      setAppointments(appointmentsRes.data.data ?? []);
     } catch (err) {
       setError(parseApiError(err));
     } finally {
@@ -77,6 +97,11 @@ export default function SlotViewer({ doctor, onClose }: SlotViewerProps) {
     load();
   }, [load]);
 
+  useEffect(() => {
+    setClosureReason("");
+    setError(null);
+  }, [date]);
+
   async function toggleDay() {
     if (date < minimumDate) return;
     setActionLoading("day");
@@ -85,9 +110,17 @@ export default function SlotViewer({ doctor, onClose }: SlotViewerProps) {
       if (dayLeave) {
         await api.delete(`/api/v1/doctors/${doctor.id}/leave/${date}`);
       } else {
+        if (affectedAppointments.length > 0 && !closureReason.trim()) {
+          setError("Add a cancellation reason before closing a date with booked appointments.");
+          setActionLoading(null);
+          return;
+        }
         await api.post(`/api/v1/doctors/${doctor.id}/leave`, {
           leave_date: date,
-          reason: "Unavailable",
+          reason: closureReason.trim() || "Unavailable",
+          cancel_existing_appointments: affectedAppointments.length > 0,
+          cancellation_reason:
+            affectedAppointments.length > 0 ? closureReason.trim() : undefined,
         });
       }
       await load();
@@ -189,6 +222,58 @@ export default function SlotViewer({ doctor, onClose }: SlotViewerProps) {
               {dayLeave ? "Make active" : "Block day"}
             </Button>
           </div>
+
+          {!dayLeave && affectedAppointments.length > 0 && (
+            <div className="rounded-lg border border-[#f3c26b] bg-[#fff7e6] px-4 py-3">
+              <div className="flex flex-col gap-1">
+                <p className="text-sm font-semibold text-[#6b4a08]">
+                  {affectedAppointments.length} booked appointment
+                  {affectedAppointments.length === 1 ? "" : "s"} will be cancelled
+                </p>
+                <p className="text-xs leading-5 text-[#7a5a17]">
+                  Closing this date cancels scheduled patients and sends them the reason below.
+                </p>
+              </div>
+
+              <div className="mt-3 grid gap-2">
+                {affectedAppointments.slice(0, 4).map((appointment) => (
+                  <div
+                    key={appointment.id}
+                    className="flex items-center justify-between gap-3 rounded-md border border-[#f3d28b] bg-white/65 px-3 py-2 text-xs"
+                  >
+                    <span className="font-medium text-[#4f3708]">
+                      Token #{appointment.token_number ?? "-"}
+                    </span>
+                    <span className="text-[#7a5a17]">
+                      {appointment.patient
+                        ? `${appointment.patient.first_name} ${appointment.patient.last_name}`
+                        : "Patient"}
+                    </span>
+                    <span className="font-mono text-[#4f3708]">
+                      {formatSlotTime(appointment.slot_time)}
+                    </span>
+                  </div>
+                ))}
+                {affectedAppointments.length > 4 && (
+                  <p className="text-xs text-[#7a5a17]">
+                    +{affectedAppointments.length - 4} more appointment
+                    {affectedAppointments.length - 4 === 1 ? "" : "s"}
+                  </p>
+                )}
+              </div>
+
+              <div className="mt-3">
+                <Input
+                  label="Cancellation reason"
+                  value={closureReason}
+                  onChange={(e) => setClosureReason(e.target.value)}
+                  placeholder="e.g. Clinic closed for maintenance"
+                  helper="Patients will see this message in notifications and appointment details."
+                  required
+                />
+              </div>
+            </div>
+          )}
 
           {error && (
             <div
