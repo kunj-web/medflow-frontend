@@ -37,6 +37,12 @@ function tomorrowStr() {
   return toDateInputValue(date);
 }
 
+function shiftDate(value: string, days: number) {
+  const date = new Date(`${value}T00:00:00`);
+  date.setDate(date.getDate() + days);
+  return toDateInputValue(date);
+}
+
 export default function BookModal({ onSuccess, onClose }: BookModalProps) {
   const [step, setStep] = useState<Step>(1);
   const [doctors, setDoctors] = useState<Doctor[]>([]);
@@ -292,8 +298,26 @@ export default function BookModal({ onSuccess, onClose }: BookModalProps) {
               )}
 
               {!slotsLoading && !slotsError && slots.length === 0 && (
-                <div className="py-8 text-center text-sm text-[var(--text-muted)]">
-                  No slots available for this date.
+                <div className="rounded-[20px] border border-dashed border-[#c8e3ea] bg-[#f8fcfd]/75 px-4 py-8 text-center">
+                  <p className="text-sm font-semibold text-[#062f3d]">
+                    Doctor unavailable on this date
+                  </p>
+                  <p className="mx-auto mt-2 max-w-sm text-xs leading-5 text-[#55717b]">
+                    The doctor may be closed for this date or may not have a working
+                    schedule. Choose another future date to continue.
+                  </p>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    className="mt-4"
+                    onClick={() => {
+                      setSelectedDate(shiftDate(selectedDate, 1));
+                      setStep(2);
+                    }}
+                  >
+                    Try next date
+                  </Button>
                 </div>
               )}
 
