@@ -526,6 +526,15 @@ function PatientDashboard() {
                           {appointment.type.replace("_", " ")}
                         </span>
                       </p>
+                      {appointment.status === AppointmentStatus.CANCELLED &&
+                        appointment.cancellation_reason && (
+                          <p className="mt-2 rounded-xl border border-red-200 bg-[var(--error-bg)]/70 px-3 py-2 text-xs leading-5 text-[#55717b]">
+                            <span className="font-semibold text-[var(--error)]">
+                              Cancellation reason:
+                            </span>{" "}
+                            {appointment.cancellation_reason}
+                          </p>
+                        )}
                     </div>
                     <div className="md:text-right shrink-0">
                       <p className="text-sm font-medium text-[#062f3d]">
