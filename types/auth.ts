@@ -1,4 +1,4 @@
-import { Gender, UserRole } from "./common";
+import { DayOfWeek, Gender, UserRole } from "./common";
 
 export type AccountStatus = "pending" | "active" | "rejected";
 export type WorkType = "hospital" | "clinic";
@@ -31,6 +31,12 @@ export interface RegisterRequest {
   clinic_name?: string;
   clinic_city?: string;
   clinic_address?: string;
+  weekly_schedule?: {
+    day_of_week: DayOfWeek;
+    start_time: string;
+    end_time: string;
+    slot_duration_minutes: number;
+  }[];
 }
 
 export interface RegisterResponse {

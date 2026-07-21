@@ -6,7 +6,7 @@ import api from "@/lib/api";
 import { register, parseApiError } from "@/lib/auth";
 import Button from "@/components/ui/Button";
 import Input from "@/components/ui/Input";
-import { Gender, UserRole } from "@/types/common";
+import { DayOfWeek, Gender, UserRole } from "@/types/common";
 import { RegisterRequest, RegisterResponse, WorkType } from "@/types/auth";
 
 interface HospitalOption {
@@ -44,6 +44,37 @@ interface FormState {
 }
 
 type FieldErrors = Partial<Record<keyof FormState, string>>;
+type ScheduleState = Record<
+  DayOfWeek,
+  {
+    active: boolean;
+    start_time: string;
+    end_time: string;
+    slot_duration_minutes: number;
+  }
+>;
+
+const WEEK_DAYS: { label: string; value: DayOfWeek }[] = [
+  { label: "Mon", value: DayOfWeek.MONDAY },
+  { label: "Tue", value: DayOfWeek.TUESDAY },
+  { label: "Wed", value: DayOfWeek.WEDNESDAY },
+  { label: "Thu", value: DayOfWeek.THURSDAY },
+  { label: "Fri", value: DayOfWeek.FRIDAY },
+  { label: "Sat", value: DayOfWeek.SATURDAY },
+  { label: "Sun", value: DayOfWeek.SUNDAY },
+];
+
+const SLOT_DURATIONS = [5, 10, 15, 20, 30, 60];
+
+const DEFAULT_SCHEDULE: ScheduleState = WEEK_DAYS.reduce((acc, day) => {
+  acc[day.value] = {
+    active: true,
+    start_time: "09:00",
+    end_time: "17:00",
+    slot_duration_minutes: 10,
+  };
+  return acc;
+}, {} as ScheduleState);
 
 const EMPTY: FormState = {
   role: UserRole.PATIENT,
@@ -70,7 +101,9 @@ const EMPTY: FormState = {
 
 export default function RegisterForm() {
   const [form, setForm] = useState<FormState>(EMPTY);
+  const [weeklySchedule, setWeeklySchedule] = useState<ScheduleState>(DEFAULT_SCHEDULE);
   const [fieldErrors, setFieldErrors] = useState<FieldErrors>({});
+  const [scheduleError, setScheduleError] = useState<string | null>(null);
   const [globalError, setGlobalError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
@@ -107,8 +140,23 @@ export default function RegisterForm() {
     };
   }
 
+  function updateSchedule(
+    day: DayOfWeek,
+    patch: Partial<ScheduleState[DayOfWeek]>
+  ) {
+    setWeeklySchedule((prev) => ({
+      ...prev,
+      [day]: {
+        ...prev[day],
+        ...patch,
+      },
+    }));
+    setScheduleError(null);
+  }
+
   function validate(): boolean {
     const errors: FieldErrors = {};
+    let nextScheduleError: string | null = null;
 
     if (!form.name.trim()) errors.name = "Name is required.";
     if (!form.email.trim()) errors.email = "Email is required.";
@@ -136,10 +184,24 @@ export default function RegisterForm() {
         if (!form.clinic_name.trim()) errors.clinic_name = "Clinic name is required.";
         if (!form.clinic_city.trim()) errors.clinic_city = "Clinic city is required.";
       }
+
+      const activeSchedules = WEEK_DAYS.filter((day) => weeklySchedule[day.value].active);
+      if (activeSchedules.length === 0) {
+        nextScheduleError = "Keep at least one working day active.";
+      } else {
+        const invalidDay = activeSchedules.find((day) => {
+          const schedule = weeklySchedule[day.value];
+          return schedule.end_time <= schedule.start_time;
+        });
+        nextScheduleError = invalidDay
+          ? `${invalidDay.label} end time must be after start time.`
+          : null;
+      }
     }
 
+    setScheduleError(nextScheduleError);
     setFieldErrors(errors);
-    return Object.keys(errors).length === 0;
+    return Object.keys(errors).length === 0 && nextScheduleError === null;
   }
 
   function buildPayload(): RegisterRequest {
@@ -182,6 +244,18 @@ export default function RegisterForm() {
       payload.clinic_city = form.clinic_city.trim();
       if (form.clinic_address.trim()) payload.clinic_address = form.clinic_address.trim();
     }
+
+    payload.weekly_schedule = WEEK_DAYS.filter((day) => weeklySchedule[day.value].active).map(
+      (day) => {
+        const schedule = weeklySchedule[day.value];
+        return {
+          day_of_week: day.value,
+          start_time: schedule.start_time,
+          end_time: schedule.end_time,
+          slot_duration_minutes: schedule.slot_duration_minutes,
+        };
+      }
+    );
 
     return payload;
   }
@@ -453,6 +527,99 @@ export default function RegisterForm() {
                     </div>
                   </div>
                 )}
+
+                <div className="rounded-[22px] border border-[#d8edf3] bg-[#f8fcfd]/75 p-4 shadow-sm backdrop-blur-xl">
+                  <div className="flex flex-col gap-1 sm:flex-row sm:items-start sm:justify-between">
+                    <div>
+                      <p className="text-sm font-semibold text-[#062f3d]">Default availability</p>
+                      <p className="mt-1 text-xs leading-5 text-[#55717b]">
+                        Used for patient booking slots after approval. Doctors can update it later.
+                      </p>
+                    </div>
+                    <span className="mt-2 w-fit rounded-full border border-[#c8e3ea] bg-white/70 px-3 py-1 text-xs font-medium text-[#24708a] sm:mt-0">
+                      09:00-17:00 default
+                    </span>
+                  </div>
+
+                  <div className="mt-4 grid grid-cols-2 gap-2 sm:grid-cols-4 lg:grid-cols-7">
+                    {WEEK_DAYS.map((day) => {
+                      const schedule = weeklySchedule[day.value];
+                      return (
+                        <button
+                          key={day.value}
+                          type="button"
+                          onClick={() => updateSchedule(day.value, { active: !schedule.active })}
+                          className={`h-10 rounded-[var(--radius-md)] border text-sm font-medium transition-colors ${
+                            schedule.active
+                              ? "border-[#1d9aaa] bg-[#dceff5] text-[#062f3d]"
+                              : "border-[#d8edf3] bg-white/60 text-[#7a9098]"
+                          }`}
+                        >
+                          {day.label}
+                        </button>
+                      );
+                    })}
+                  </div>
+
+                  <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-3">
+                    <div className="flex flex-col gap-1.5">
+                      <label className="text-sm font-medium text-[var(--text-primary)]">
+                        Start time
+                      </label>
+                      <input
+                        type="time"
+                        value={weeklySchedule[DayOfWeek.MONDAY].start_time}
+                        onChange={(e) =>
+                          WEEK_DAYS.forEach((day) =>
+                            updateSchedule(day.value, { start_time: e.target.value })
+                          )
+                        }
+                        className="h-9 rounded-[var(--radius-md)] border border-[var(--border)] bg-white px-3 text-sm text-[#062f3d]"
+                      />
+                    </div>
+                    <div className="flex flex-col gap-1.5">
+                      <label className="text-sm font-medium text-[var(--text-primary)]">
+                        End time
+                      </label>
+                      <input
+                        type="time"
+                        value={weeklySchedule[DayOfWeek.MONDAY].end_time}
+                        onChange={(e) =>
+                          WEEK_DAYS.forEach((day) =>
+                            updateSchedule(day.value, { end_time: e.target.value })
+                          )
+                        }
+                        className="h-9 rounded-[var(--radius-md)] border border-[var(--border)] bg-white px-3 text-sm text-[#062f3d]"
+                      />
+                    </div>
+                    <div className="flex flex-col gap-1.5">
+                      <label className="text-sm font-medium text-[var(--text-primary)]">
+                        Slot duration
+                      </label>
+                      <select
+                        value={weeklySchedule[DayOfWeek.MONDAY].slot_duration_minutes}
+                        onChange={(e) =>
+                          WEEK_DAYS.forEach((day) =>
+                            updateSchedule(day.value, {
+                              slot_duration_minutes: Number(e.target.value),
+                            })
+                          )
+                        }
+                        className="h-9 rounded-[var(--radius-md)] border border-[var(--border)] bg-white px-3 text-sm text-[#062f3d]"
+                      >
+                        {SLOT_DURATIONS.map((minutes) => (
+                          <option key={minutes} value={minutes}>
+                            {minutes} minutes
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                  </div>
+
+                  {scheduleError && (
+                    <p className="mt-3 text-xs text-[var(--error)]">{scheduleError}</p>
+                  )}
+                </div>
               </>
             )}
 
