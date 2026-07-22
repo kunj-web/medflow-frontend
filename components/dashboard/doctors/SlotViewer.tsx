@@ -44,6 +44,7 @@ export default function SlotViewer({ doctor, onClose }: SlotViewerProps) {
   const [leaves, setLeaves] = useState<DoctorLeave[]>([]);
   const [appointments, setAppointments] = useState<Appointment[]>([]);
   const [closureReason, setClosureReason] = useState("");
+  const [confirmClosureOpen, setConfirmClosureOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const [actionLoading, setActionLoading] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -99,22 +100,31 @@ export default function SlotViewer({ doctor, onClose }: SlotViewerProps) {
 
   useEffect(() => {
     setClosureReason("");
+    setConfirmClosureOpen(false);
     setError(null);
   }, [date]);
 
-  async function toggleDay() {
+  function handleDayAction() {
     if (date < minimumDate) return;
+    if (!dayLeave && affectedAppointments.length > 0) {
+      if (!closureReason.trim()) {
+        setError("Add a cancellation reason before closing a date with booked appointments.");
+        return;
+      }
+      setError(null);
+      setConfirmClosureOpen(true);
+      return;
+    }
+    toggleDay();
+  }
+
+  async function toggleDay() {
     setActionLoading("day");
     setError(null);
     try {
       if (dayLeave) {
         await api.delete(`/api/v1/doctors/${doctor.id}/leave/${date}`);
       } else {
-        if (affectedAppointments.length > 0 && !closureReason.trim()) {
-          setError("Add a cancellation reason before closing a date with booked appointments.");
-          setActionLoading(null);
-          return;
-        }
         await api.post(`/api/v1/doctors/${doctor.id}/leave`, {
           leave_date: date,
           reason: closureReason.trim() || "Unavailable",
@@ -123,6 +133,7 @@ export default function SlotViewer({ doctor, onClose }: SlotViewerProps) {
             affectedAppointments.length > 0 ? closureReason.trim() : undefined,
         });
       }
+      setConfirmClosureOpen(false);
       await load();
     } catch (err) {
       setError(parseApiError(err));
@@ -215,7 +226,7 @@ export default function SlotViewer({ doctor, onClose }: SlotViewerProps) {
             <Button
               variant={dayLeave ? "secondary" : "ghost"}
               size="sm"
-              onClick={toggleDay}
+              onClick={handleDayAction}
               loading={actionLoading === "day"}
               disabled={loading || dateIsBeforeMinimum}
             >
@@ -369,6 +380,63 @@ export default function SlotViewer({ doctor, onClose }: SlotViewerProps) {
           </Button>
         </div>
       </div>
+
+      {confirmClosureOpen && (
+        <div
+          className="fixed inset-0 z-[60] flex items-center justify-center bg-black/35 p-4 backdrop-blur-sm"
+          onClick={(event) => {
+            if (event.target === event.currentTarget && !actionLoading) {
+              setConfirmClosureOpen(false);
+            }
+          }}
+        >
+          <div className="w-full max-w-md rounded-[24px] border border-white/70 bg-[#f8fcfd]/95 p-5 shadow-[0_24px_70px_rgba(24,86,115,0.22)] backdrop-blur-2xl">
+            <div className="flex items-start gap-3">
+              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl border border-[#f3c26b] bg-[#fff7e6] text-[#9a6500]">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.1" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M12 9v4" />
+                  <path d="M12 17h.01" />
+                  <path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0Z" />
+                </svg>
+              </div>
+              <div>
+                <h3 className="text-base font-semibold text-[#062f3d]">
+                  Cancel {affectedAppointments.length} appointment
+                  {affectedAppointments.length === 1 ? "" : "s"}?
+                </h3>
+                <p className="mt-1 text-sm leading-6 text-[#55717b]">
+                  Closing {date} will cancel booked appointments and notify patients
+                  with the reason you entered.
+                </p>
+              </div>
+            </div>
+
+            <div className="mt-4 rounded-2xl border border-[#d8edf3] bg-white/70 px-4 py-3">
+              <p className="text-xs font-semibold uppercase tracking-[0.08em] text-[#55717b]">
+                Reason sent to patients
+              </p>
+              <p className="mt-2 text-sm text-[#062f3d]">{closureReason}</p>
+            </div>
+
+            <div className="mt-5 flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
+              <Button
+                variant="ghost"
+                onClick={() => setConfirmClosureOpen(false)}
+                disabled={!!actionLoading}
+              >
+                Go back
+              </Button>
+              <Button
+                variant="primary"
+                onClick={toggleDay}
+                loading={actionLoading === "day"}
+              >
+                Close date and cancel appointments
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
