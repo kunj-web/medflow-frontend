@@ -533,7 +533,7 @@ export default function RegisterForm() {
                     <div>
                       <p className="text-sm font-semibold text-[#062f3d]">Default availability</p>
                       <p className="mt-1 text-xs leading-5 text-[#55717b]">
-                        Used for patient booking slots after approval. Doctors can update it later.
+                        Set each working day separately. These slots are used for patient bookings after approval.
                       </p>
                     </div>
                     <span className="mt-2 w-fit rounded-full border border-[#c8e3ea] bg-white/70 px-3 py-1 text-xs font-medium text-[#24708a] sm:mt-0">
@@ -561,59 +561,98 @@ export default function RegisterForm() {
                     })}
                   </div>
 
-                  <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-3">
-                    <div className="flex flex-col gap-1.5">
-                      <label className="text-sm font-medium text-[var(--text-primary)]">
-                        Start time
-                      </label>
-                      <input
-                        type="time"
-                        value={weeklySchedule[DayOfWeek.MONDAY].start_time}
-                        onChange={(e) =>
-                          WEEK_DAYS.forEach((day) =>
-                            updateSchedule(day.value, { start_time: e.target.value })
-                          )
-                        }
-                        className="h-9 rounded-[var(--radius-md)] border border-[var(--border)] bg-white px-3 text-sm text-[#062f3d]"
-                      />
-                    </div>
-                    <div className="flex flex-col gap-1.5">
-                      <label className="text-sm font-medium text-[var(--text-primary)]">
-                        End time
-                      </label>
-                      <input
-                        type="time"
-                        value={weeklySchedule[DayOfWeek.MONDAY].end_time}
-                        onChange={(e) =>
-                          WEEK_DAYS.forEach((day) =>
-                            updateSchedule(day.value, { end_time: e.target.value })
-                          )
-                        }
-                        className="h-9 rounded-[var(--radius-md)] border border-[var(--border)] bg-white px-3 text-sm text-[#062f3d]"
-                      />
-                    </div>
-                    <div className="flex flex-col gap-1.5">
-                      <label className="text-sm font-medium text-[var(--text-primary)]">
-                        Slot duration
-                      </label>
-                      <select
-                        value={weeklySchedule[DayOfWeek.MONDAY].slot_duration_minutes}
-                        onChange={(e) =>
-                          WEEK_DAYS.forEach((day) =>
-                            updateSchedule(day.value, {
-                              slot_duration_minutes: Number(e.target.value),
-                            })
-                          )
-                        }
-                        className="h-9 rounded-[var(--radius-md)] border border-[var(--border)] bg-white px-3 text-sm text-[#062f3d]"
-                      >
-                        {SLOT_DURATIONS.map((minutes) => (
-                          <option key={minutes} value={minutes}>
-                            {minutes} minutes
-                          </option>
-                        ))}
-                      </select>
-                    </div>
+                  <div className="mt-4 hidden grid-cols-[84px_minmax(0,1fr)_minmax(0,1fr)_minmax(120px,0.8fr)] gap-2 px-3 text-xs font-semibold uppercase tracking-[0.08em] text-[#55717b] md:grid">
+                    <span>Day</span>
+                    <span>Start</span>
+                    <span>End</span>
+                    <span>Slot</span>
+                  </div>
+
+                  <div className="mt-2 grid gap-2">
+                    {WEEK_DAYS.map((day) => {
+                      const schedule = weeklySchedule[day.value];
+                      return (
+                        <div
+                          key={day.value}
+                          className={`grid gap-2 rounded-2xl border px-3 py-3 transition-colors md:grid-cols-[84px_minmax(0,1fr)_minmax(0,1fr)_minmax(120px,0.8fr)] md:items-center ${
+                            schedule.active
+                              ? "border-[#d8edf3] bg-white/72"
+                              : "border-[#d8edf3] bg-white/35"
+                          }`}
+                        >
+                          <div className="flex items-center justify-between gap-3 md:block">
+                            <button
+                              type="button"
+                              onClick={() => updateSchedule(day.value, { active: !schedule.active })}
+                              className={`h-8 rounded-full border px-3 text-sm font-semibold transition-colors md:w-full ${
+                                schedule.active
+                                  ? "border-[#1d9aaa] bg-[#dceff5] text-[#062f3d]"
+                                  : "border-[#d8edf3] bg-white/70 text-[#7a9098]"
+                              }`}
+                            >
+                              {day.label}
+                            </button>
+                            {!schedule.active && (
+                              <span className="text-xs font-medium text-[#7a9098] md:hidden">
+                                Inactive
+                              </span>
+                            )}
+                          </div>
+
+                          <div className="grid grid-cols-1 gap-1.5">
+                            <label className="text-xs font-medium text-[#55717b] md:hidden">
+                              Start time
+                            </label>
+                            <input
+                              type="time"
+                              value={schedule.start_time}
+                              disabled={!schedule.active}
+                              onChange={(e) =>
+                                updateSchedule(day.value, { start_time: e.target.value })
+                              }
+                              className="h-9 rounded-[var(--radius-md)] border border-[var(--border)] bg-white px-3 text-sm text-[#062f3d] disabled:bg-white/45 disabled:text-[#9aaab0]"
+                            />
+                          </div>
+
+                          <div className="grid grid-cols-1 gap-1.5">
+                            <label className="text-xs font-medium text-[#55717b] md:hidden">
+                              End time
+                            </label>
+                            <input
+                              type="time"
+                              value={schedule.end_time}
+                              disabled={!schedule.active}
+                              onChange={(e) =>
+                                updateSchedule(day.value, { end_time: e.target.value })
+                              }
+                              className="h-9 rounded-[var(--radius-md)] border border-[var(--border)] bg-white px-3 text-sm text-[#062f3d] disabled:bg-white/45 disabled:text-[#9aaab0]"
+                            />
+                          </div>
+
+                          <div className="grid grid-cols-1 gap-1.5">
+                            <label className="text-xs font-medium text-[#55717b] md:hidden">
+                              Slot duration
+                            </label>
+                            <select
+                              value={schedule.slot_duration_minutes}
+                              disabled={!schedule.active}
+                              onChange={(e) =>
+                                updateSchedule(day.value, {
+                                  slot_duration_minutes: Number(e.target.value),
+                                })
+                              }
+                              className="h-9 rounded-[var(--radius-md)] border border-[var(--border)] bg-white px-3 text-sm text-[#062f3d] disabled:bg-white/45 disabled:text-[#9aaab0]"
+                            >
+                              {SLOT_DURATIONS.map((minutes) => (
+                                <option key={minutes} value={minutes}>
+                                  {minutes} minutes
+                                </option>
+                              ))}
+                            </select>
+                          </div>
+                        </div>
+                      );
+                    })}
                   </div>
 
                   {scheduleError && (
